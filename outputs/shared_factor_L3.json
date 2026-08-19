@@ -1,0 +1,55 @@
+{
+  "layer": 3,
+  "n_tokens": 24,
+  "n_experts": 8,
+  "expert_ids": [
+    320,
+    314,
+    100,
+    316,
+    35,
+    79,
+    244,
+    171
+  ],
+  "m": 3072,
+  "n": 7168,
+  "independent": {
+    "128": {
+      "params": 10485760,
+      "act_error": 0.674706,
+      "frob_error": 0.876661
+    },
+    "512": {
+      "params": 41943040,
+      "act_error": 0.398808,
+      "frob_error": 0.612473
+    }
+  },
+  "shared": {
+    "rs8/ind128": {
+      "params": 10485760,
+      "r_private": null,
+      "note": "shared matrix alone exceeds the budget"
+    },
+    "rs8/ind512": {
+      "params": 41943040,
+      "r_shared": 8,
+      "r_private": 243,
+      "act_error": 0.497997,
+      "frob_error": 0.690993
+    },
+    "rs16/ind128": {
+      "params": 10485760,
+      "r_private": null,
+      "note": "shared matrix alone exceeds the budget"
+    },
+    "rs16/ind512": {
+      "params": 41943040,
+      "r_shared": 16,
+      "r_private": 243,
+      "act_error": 0.49765,
+      "frob_error": 0.690927
+    }
+  }
+}

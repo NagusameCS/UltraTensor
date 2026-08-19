@@ -1,0 +1,27 @@
+{
+  "layer": 3,
+  "shape": [
+    384,
+    7168
+  ],
+  "top_k": 6,
+  "n_tokens": 24,
+  "bits4": {
+    "frob_error": 0.81099,
+    "topk_agreement": 0.0347,
+    "params_ratio": 0.0428,
+    "seconds": 2.5
+  },
+  "bits6": {
+    "frob_error": 0.68209,
+    "topk_agreement": 0.2361,
+    "params_ratio": 0.1678,
+    "seconds": 22.9
+  },
+  "bits8": {
+    "frob_error": 0.20747,
+    "topk_agreement": 0.7222,
+    "params_ratio": 0.6678,
+    "seconds": 238.4
+  }
+}

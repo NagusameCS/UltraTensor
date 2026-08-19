@@ -1,0 +1,39 @@
+{
+  "layers": [
+    "L0",
+    "L1",
+    "L2",
+    "L3"
+  ],
+  "per_layer": {
+    "L0": {
+      "mean_hidden_norm": 10.23,
+      "mean_activation_variance": 0.010101
+    },
+    "L1": {
+      "mean_hidden_norm": 11.22,
+      "mean_activation_variance": 0.014492
+    },
+    "L2": {
+      "mean_hidden_norm": 15.37,
+      "mean_activation_variance": 0.021461
+    },
+    "L3": {
+      "mean_hidden_norm": 12.99,
+      "mean_activation_variance": 0.014829
+    }
+  },
+  "variance_ratio": 1.4734,
+  "phases_valid": true,
+  "phases": [
+    "compress",
+    "refine",
+    "refine",
+    "refine"
+  ],
+  "compress_zone": [
+    0,
+    0
+  ],
+  "note": "4-layer first datum; attention-mass-per-slot (CSA/HCA sink placement) still needs attention forwards"
+}

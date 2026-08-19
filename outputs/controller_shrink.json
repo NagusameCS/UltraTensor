@@ -1,0 +1,288 @@
+{
+  "layer": 3,
+  "top_k": 6,
+  "train": 64,
+  "d": 7168,
+  "c": 384,
+  "methods": {
+    "ridge_dense": {
+      "fwd": {
+        "train_agreement": 1.0,
+        "hold_agreement": 0.5227,
+        "margin_mean": 1.0035,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 0.997299
+      },
+      "rev": {
+        "train_agreement": 1.0,
+        "hold_agreement": 0.2879,
+        "margin_mean": 1.003,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 0.997831
+      },
+      "all": {
+        "train_agreement": 1.0,
+        "hold_agreement": 1.0,
+        "margin_mean": 1.0034,
+        "margin_lt_1p01_frac": 0.9535,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 0.997046
+      },
+      "params": 2752512,
+      "macs_per_token": 2752512
+    },
+    "ridge_factored": {
+      "fwd": {
+        "train_agreement": 1.0,
+        "hold_agreement": 0.5227,
+        "margin_mean": 1.0035,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 0.997299
+      },
+      "rev": {
+        "train_agreement": 1.0,
+        "hold_agreement": 0.2879,
+        "margin_mean": 1.003,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 0.997831
+      },
+      "all": {
+        "train_agreement": 1.0,
+        "hold_agreement": 1.0,
+        "margin_mean": 1.0034,
+        "margin_lt_1p01_frac": 0.9535,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 0.997046
+      },
+      "params": 649472,
+      "macs_per_token": 649472
+    },
+    "ridge_factored_reg": {
+      "fwd": {
+        "train_agreement": 0.9974,
+        "hold_agreement": 0.5833,
+        "margin_mean": 1.0035,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 0.086386
+      },
+      "rev": {
+        "train_agreement": 0.9922,
+        "hold_agreement": 0.3561,
+        "margin_mean": 1.003,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 0.268892
+      },
+      "all": {
+        "train_agreement": 0.9922,
+        "hold_agreement": 0.9922,
+        "margin_mean": 1.0034,
+        "margin_lt_1p01_frac": 0.9535,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 0.000755
+      },
+      "params": 649472,
+      "macs_per_token": 649472
+    },
+    "router_svd_k4": {
+      "fwd": {
+        "train_agreement": 0.0104,
+        "hold_agreement": 0.0,
+        "margin_mean": 1.0035,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.620931
+      },
+      "rev": {
+        "train_agreement": 0.0026,
+        "hold_agreement": 0.0227,
+        "margin_mean": 1.003,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.759925
+      },
+      "all": {
+        "train_agreement": 0.0078,
+        "hold_agreement": 0.0078,
+        "margin_mean": 1.0034,
+        "margin_lt_1p01_frac": 0.9535,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.660231
+      },
+      "params": 30208,
+      "macs_per_token": 30208
+    },
+    "router_svd_k8": {
+      "fwd": {
+        "train_agreement": 0.0286,
+        "hold_agreement": 0.0,
+        "margin_mean": 1.0035,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.621151
+      },
+      "rev": {
+        "train_agreement": 0.0208,
+        "hold_agreement": 0.0227,
+        "margin_mean": 1.003,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.760153
+      },
+      "all": {
+        "train_agreement": 0.0213,
+        "hold_agreement": 0.0213,
+        "margin_mean": 1.0034,
+        "margin_lt_1p01_frac": 0.9535,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.660507
+      },
+      "params": 60416,
+      "macs_per_token": 60416
+    },
+    "router_svd_k16": {
+      "fwd": {
+        "train_agreement": 0.1068,
+        "hold_agreement": 0.1364,
+        "margin_mean": 1.0035,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.621346
+      },
+      "rev": {
+        "train_agreement": 0.1406,
+        "hold_agreement": 0.0379,
+        "margin_mean": 1.003,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.76021
+      },
+      "all": {
+        "train_agreement": 0.1143,
+        "hold_agreement": 0.1143,
+        "margin_mean": 1.0034,
+        "margin_lt_1p01_frac": 0.9535,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.660748
+      },
+      "params": 120832,
+      "macs_per_token": 120832
+    },
+    "router_svd_k32": {
+      "fwd": {
+        "train_agreement": 0.25,
+        "hold_agreement": 0.2348,
+        "margin_mean": 1.0035,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.621286
+      },
+      "rev": {
+        "train_agreement": 0.2865,
+        "hold_agreement": 0.1288,
+        "margin_mean": 1.003,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.760229
+      },
+      "all": {
+        "train_agreement": 0.2461,
+        "hold_agreement": 0.2461,
+        "margin_mean": 1.0034,
+        "margin_lt_1p01_frac": 0.9535,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.660666
+      },
+      "params": 241664,
+      "macs_per_token": 241664
+    },
+    "router_svd_k64": {
+      "fwd": {
+        "train_agreement": 0.4193,
+        "hold_agreement": 0.4015,
+        "margin_mean": 1.0035,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.621617
+      },
+      "rev": {
+        "train_agreement": 0.4688,
+        "hold_agreement": 0.2576,
+        "margin_mean": 1.003,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.760273
+      },
+      "all": {
+        "train_agreement": 0.4147,
+        "hold_agreement": 0.4147,
+        "margin_mean": 1.0034,
+        "margin_lt_1p01_frac": 0.9535,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.660874
+      },
+      "params": 483328,
+      "macs_per_token": 483328
+    },
+    "router_svd_k128": {
+      "fwd": {
+        "train_agreement": 0.5365,
+        "hold_agreement": 0.5833,
+        "margin_mean": 1.0035,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.621579
+      },
+      "rev": {
+        "train_agreement": 0.6068,
+        "hold_agreement": 0.3788,
+        "margin_mean": 1.003,
+        "margin_lt_1p01_frac": 0.9545,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.76037
+      },
+      "all": {
+        "train_agreement": 0.5484,
+        "hold_agreement": 0.5484,
+        "margin_mean": 1.0034,
+        "margin_lt_1p01_frac": 0.9535,
+        "margin_lt_1p05_frac": 1.0,
+        "hold_agreement_sharp_boundary": null,
+        "hold_score_rel_l1": 1.660936
+      },
+      "params": 966656,
+      "macs_per_token": 966656
+    }
+  }
+}

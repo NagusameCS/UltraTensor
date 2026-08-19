@@ -1,0 +1,71 @@
+{
+  "n_layers": 61,
+  "exact_per_layer": {
+    "0": {
+      "mean": 0.1511,
+      "ci95": [
+        0.1466,
+        0.155
+      ],
+      "n": 60
+    },
+    "10": {
+      "mean": 0.1452,
+      "ci95": [
+        0.1398,
+        0.1504
+      ],
+      "n": 60
+    }
+  },
+  "layer_latency_s": {
+    "mean": 0.1339,
+    "ci95": [
+      0.132,
+      0.136
+    ],
+    "analytic_pooled_ci95": [
+      0.1319,
+      0.136
+    ]
+  },
+  "projected_tok_s_61_layers": {
+    "mean": 0.1228,
+    "ci95": [
+      0.121,
+      0.1246
+    ]
+  },
+  "hash_vs_dense": {
+    "dense_mean": 0.133,
+    "hash_mean": 0.1526,
+    "difference": -0.0196,
+    "dense_ci95": [
+      0.1312,
+      0.1348
+    ],
+    "hash_ci95": [
+      0.1511,
+      0.1544
+    ]
+  },
+  "lazy_full": {
+    "measured_ffn": true,
+    "n_hash_layers": 3,
+    "bandwidth_GiBs": 2.0,
+    "bytes_per_token_GiB": 21.663077192,
+    "routed_GiB": 11.5089408,
+    "shexp_GiB": 1.9181568,
+    "dense_GiB": 8.235979592,
+    "resident_ram_GiB": 10.154136392,
+    "projected_tok_s_serial": 0.05263083591354782,
+    "projected_tok_s_pipelined": 0.09232298727803011,
+    "projected_tok_s_resident": 0.12241805564680419,
+    "aggregate_tok_s_ceiling": 0.09232298727803011,
+    "aggregate_tok_s_resident_ceiling": 0.17377793793152538,
+    "s_per_token_serial": 19.00026823899614,
+    "s_per_token_pipelined": 10.831538596,
+    "s_per_token_resident": 8.168729642996137,
+    "s_per_token_reads": 10.831538596
+  }
+}

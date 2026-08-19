@@ -1,0 +1,10 @@
+{
+  "fwd": {
+    "factored_hold_agreement": 0.5227,
+    "params": 483328
+  },
+  "rev": {
+    "factored_hold_agreement": 0.2879,
+    "params": 483328
+  }
+}

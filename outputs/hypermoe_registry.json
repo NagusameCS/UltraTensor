@@ -1,0 +1,176 @@
+{
+  "version": 2,
+  "router": {
+    "type": "heuristic-v1",
+    "module": "ultratensor.hypermoe.router"
+  },
+  "fallbacks": [
+    "general",
+    "coder-general"
+  ],
+  "specialists": [
+    {
+      "id": "coder-gpu-16",
+      "domain": "general",
+      "battery": "code_prompts.json",
+      "keep": 16,
+      "model": "D:/hyperv4/models/coder/DeepSeek-V4-Coder-keep16u-iq2xs.gguf",
+      "backend": "llama-http",
+      "port": 8788,
+      "ngl": 12,
+      "quant": "IQ2_XS",
+      "status": "built"
+    },
+    {
+      "id": "coder-gpu-12",
+      "domain": "general",
+      "battery": "code_prompts.json",
+      "keep": 12,
+      "model": "D:/hyperv4/models/coder/DeepSeek-V4-Coder-keep12u-iq2xs.gguf",
+      "backend": "llama-http",
+      "port": 8788,
+      "quant": "IQ2_XS",
+      "status": "built",
+      "ngl": 12
+    },
+    {
+      "id": "coder-gpu-8",
+      "domain": "general",
+      "battery": "code_prompts.json",
+      "keep": 8,
+      "model": "D:/hyperv4/models/coder/DeepSeek-V4-Coder-keep8u-iq2xs.gguf",
+      "backend": "llama-http",
+      "port": 8788,
+      "quant": "IQ2_XS",
+      "status": "built",
+      "ngl": 12
+    },
+    {
+      "id": "coder-general-64",
+      "domain": "coder-general",
+      "battery": "code_prompts.json",
+      "keep": 64,
+      "model": "Y:/models/coder/DeepSeek-V4-Coder-keep64-00001-of-00001.gguf",
+      "backend": "numpy",
+      "quant": "Q3_K_M",
+      "status": "built"
+    },
+    {
+      "id": "coder-uniform-16",
+      "domain": "general",
+      "battery": "code_prompts.json",
+      "keep": 16,
+      "model": "D:/hyperv4/models/coder/DeepSeek-V4-Coder-keep16u.gguf",
+      "backend": "llama-cli",
+      "quant": "Q3_K",
+      "status": "built"
+    },
+    {
+      "id": "python-16",
+      "domain": "python",
+      "battery": "pl_prompts.json",
+      "segment": "python",
+      "keep": 16,
+      "model": null,
+      "backend": "llama-cli",
+      "quant": "IQ2_XS",
+      "status": "planned",
+      "ranking": "outputs/rank_python.json"
+    },
+    {
+      "id": "rust-16",
+      "domain": "rust",
+      "battery": "pl_prompts.json",
+      "segment": "rust",
+      "keep": 16,
+      "model": null,
+      "backend": "llama-cli",
+      "quant": "IQ2_XS",
+      "status": "planned",
+      "ranking": "outputs/rank_rust.json"
+    },
+    {
+      "id": "sql-16",
+      "domain": "sql",
+      "battery": "pl_prompts.json",
+      "segment": "sql",
+      "keep": 16,
+      "model": null,
+      "backend": "llama-cli",
+      "quant": "IQ2_XS",
+      "status": "planned",
+      "ranking": "outputs/rank_sql.json"
+    },
+    {
+      "id": "javascript-16",
+      "domain": "javascript",
+      "battery": "pl_prompts.json",
+      "segment": "js",
+      "keep": 16,
+      "model": null,
+      "backend": "llama-cli",
+      "quant": "IQ2_XS",
+      "status": "planned",
+      "ranking": "outputs/rank_javascript.json"
+    },
+    {
+      "id": "backend-16",
+      "domain": "backend",
+      "battery": "domain_prompts.json",
+      "segment": "backend",
+      "keep": 16,
+      "model": null,
+      "backend": "llama-cli",
+      "quant": "IQ2_XS",
+      "status": "planned",
+      "ranking": "outputs/rank_backend.json"
+    },
+    {
+      "id": "frontend-16",
+      "domain": "frontend",
+      "battery": "domain_prompts.json",
+      "segment": "frontend",
+      "keep": 16,
+      "model": null,
+      "backend": "llama-cli",
+      "quant": "IQ2_XS",
+      "status": "planned",
+      "ranking": "outputs/rank_frontend.json"
+    },
+    {
+      "id": "data-16",
+      "domain": "data",
+      "battery": "domain_prompts.json",
+      "segment": "data",
+      "keep": 16,
+      "model": null,
+      "backend": "llama-cli",
+      "quant": "IQ2_XS",
+      "status": "planned",
+      "ranking": "outputs/rank_data.json"
+    },
+    {
+      "id": "devops-16",
+      "domain": "devops",
+      "battery": "domain_prompts.json",
+      "segment": "devops",
+      "keep": 16,
+      "model": null,
+      "backend": "llama-cli",
+      "quant": "IQ2_XS",
+      "status": "planned",
+      "ranking": "outputs/rank_devops.json"
+    },
+    {
+      "id": "math-16",
+      "domain": "math",
+      "battery": "math_prompts.json",
+      "keep": 16,
+      "model": null,
+      "backend": "llama-cli",
+      "quant": "IQ2_XS",
+      "status": "planned",
+      "ranking": "outputs/rank_math.json"
+    }
+  ]
+}

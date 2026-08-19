@@ -1,0 +1,13 @@
+{
+  "n_resident": 4,
+  "expert_ids": [
+    307,
+    320,
+    232,
+    88
+  ],
+  "load_s": 9.5,
+  "resident_mb": 1057.0,
+  "forward_ms_per_token": 2196.9,
+  "output_norm": 17.9
+}

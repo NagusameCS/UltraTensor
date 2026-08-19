@@ -1,0 +1,32 @@
+
+
+Loading model... 
+
+▄▄ ▄▄
+██ ██
+██ ██  ▀▀█▄ ███▄███▄  ▀▀█▄    ▄████ ████▄ ████▄
+██ ██ ▄█▀██ ██ ██ ██ ▄█▀██    ██    ██ ██ ██ ██
+██ ██ ▀█▄██ ██ ██ ██ ▀█▄██ ██ ▀████ ████▀ ████▀
+                                    ██    ██
+                                    ▀▀    ▀▀
+
+build      : b10424-2bacf9ea5
+model      : D:\hyperv4\models\coder\DeepSeek-V4-Coder-keep12u-iq2xs.gguf
+ftype      : IQ2_XS - 2.3125 bpw
+modalities : text
+
+available commands:
+  /exit or Ctrl+C     stop or exit
+  /regen              regenerate the last response
+  /clear              clear the chat history
+  /read <file>        add a text file
+  /glob <pattern>     add text files using globbing pattern
+
+
+
+> fibonacci
+ MSP فريبيسKahanay认识的
+
+[ Prompt: 1.5 t/s | Generation: 1.2 t/s ]
+
+> 

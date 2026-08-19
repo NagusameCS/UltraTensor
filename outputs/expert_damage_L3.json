@@ -1,0 +1,116 @@
+{
+  "alpha": 0.9,
+  "n_candidates": 8,
+  "n_samples": 24,
+  "tau_mean": 0.10398411248221057,
+  "tau_cvar": 0.42683346771862224,
+  "pruned": [
+    2,
+    3,
+    6,
+    7
+  ],
+  "per_candidate": [
+    {
+      "mean": 0.184441,
+      "cvar": 0.473809,
+      "worst": 0.512116,
+      "cvar_ci": [
+        0.376043,
+        0.512116
+      ],
+      "safe_to_prune": false
+    },
+    {
+      "mean": 0.126087,
+      "cvar": 0.470453,
+      "worst": 0.549327,
+      "cvar_ci": [
+        0.282204,
+        0.549327
+      ],
+      "safe_to_prune": false
+    },
+    {
+      "mean": 0.081577,
+      "cvar": 0.283498,
+      "worst": 0.332036,
+      "cvar_ci": [
+        0.233002,
+        0.332036
+      ],
+      "safe_to_prune": true
+    },
+    {
+      "mean": 0.091398,
+      "cvar": 0.383214,
+      "worst": 0.541362,
+      "cvar_ci": [
+        0.225876,
+        0.541362
+      ],
+      "safe_to_prune": true
+    },
+    {
+      "mean": 0.189297,
+      "cvar": 1.0,
+      "worst": 1.0,
+      "cvar_ci": [
+        0.453005,
+        1.0
+      ],
+      "safe_to_prune": false
+    },
+    {
+      "mean": 0.11657,
+      "cvar": 0.578689,
+      "worst": 1.0,
+      "cvar_ci": [
+        0.276585,
+        1.0
+      ],
+      "safe_to_prune": false
+    },
+    {
+      "mean": 0.04184,
+      "cvar": 0.237096,
+      "worst": 0.289689,
+      "cvar_ci": [
+        0.096563,
+        0.289689
+      ],
+      "safe_to_prune": true
+    },
+    {
+      "mean": 0.043789,
+      "cvar": 0.284556,
+      "worst": 0.332891,
+      "cvar_ci": [
+        0.065756,
+        0.332891
+      ],
+      "safe_to_prune": true
+    }
+  ],
+  "expert_ids": [
+    320,
+    314,
+    100,
+    316,
+    35,
+    79,
+    244,
+    171
+  ],
+  "n_routed_tokens": {
+    "320": 13,
+    "314": 10,
+    "100": 8,
+    "316": 8,
+    "35": 7,
+    "79": 7,
+    "244": 5,
+    "171": 4
+  },
+  "note": "first-order output-magnitude proxy; ignores router renormalization and shared experts"
+}

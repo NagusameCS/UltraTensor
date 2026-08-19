@@ -1,0 +1,22 @@
+{
+  "provenance_version": 1,
+  "created": "2026-08-17T18:07:35",
+  "patches": [
+    "split.count=1",
+    "nextn_predict_layers=0"
+  ],
+  "chain": [
+    {
+      "stage": "census",
+      "path": "outputs\\code_census.json",
+      "sha256": "cc281fb43da4c6e557389756e6edea69b68c6de3887d1e5fb2e89b8d7d5a4fea",
+      "prev": ""
+    },
+    {
+      "stage": "model",
+      "path": "D:\\hyperv4\\models\\coder\\DeepSeek-V4-Coder-keep16u.gguf",
+      "sha256": "a7f11d2b30ef79c35f2a01c71001ae6d6da62ac6974a309d5afa6f601d9b21b5",
+      "prev": "cc281fb43da4c6e557389756e6edea69b68c6de3887d1e5fb2e89b8d7d5a4fea"
+    }
+  ]
+}

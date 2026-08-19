@@ -1,0 +1,89 @@
+{
+  "n_tokens": 86,
+  "layers": {
+    "0": {
+      "n_steps": 86,
+      "distinct_experts": 246,
+      "H": {
+        "1": {
+          "oracle_union": 6.0,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 246.0
+        },
+        "4": {
+          "oracle_union": 22.658823529411766,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 246.0
+        },
+        "8": {
+          "oracle_union": 42.129411764705885,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 246.0
+        }
+      }
+    },
+    "1": {
+      "n_steps": 86,
+      "distinct_experts": 240,
+      "H": {
+        "1": {
+          "oracle_union": 6.0,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 240.0
+        },
+        "4": {
+          "oracle_union": 22.894117647058824,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 240.0
+        },
+        "8": {
+          "oracle_union": 42.56470588235294,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 240.0
+        }
+      }
+    },
+    "2": {
+      "n_steps": 86,
+      "distinct_experts": 249,
+      "H": {
+        "1": {
+          "oracle_union": 6.0,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 249.0
+        },
+        "4": {
+          "oracle_union": 23.0,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 249.0
+        },
+        "8": {
+          "oracle_union": 43.09411764705882,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 249.0
+        }
+      }
+    },
+    "3": {
+      "n_steps": 86,
+      "distinct_experts": 121,
+      "H": {
+        "1": {
+          "oracle_union": 6.0,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 16.68
+        },
+        "4": {
+          "oracle_union": 15.458823529411765,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 121.0
+        },
+        "8": {
+          "oracle_union": 24.141176470588235,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 121.0
+        }
+      }
+    }
+  }
+}

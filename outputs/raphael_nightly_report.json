@@ -1,0 +1,14 @@
+{
+  "built": [],
+  "skipped": [
+    "python-16",
+    "rust-16",
+    "sql-16",
+    "javascript-16",
+    "backend-16",
+    "frontend-16",
+    "data-16",
+    "devops-16",
+    "math-16"
+  ]
+}

@@ -1,0 +1,8 @@
+Write a Python function to compute fibonacci numbers.
+Write a C function to quicksort an array of integers.
+Write a SQL query to find duplicate emails in a users table.
+Write a Rust function to reverse a string.
+Write a JavaScript function to debounce repeated events.
+Write a shell script to count lines of code in a directory.
+Explain what a binary heap is.
+Write a Python generator that yields prime numbers forever.

@@ -1,0 +1,135 @@
+{
+  "layer": 3,
+  "n_tokens": 24,
+  "top_k": 6,
+  "miss_cost_ms": 500.0,
+  "prefetch_cost_ms": 50.0,
+  "caps": {
+    "oracle/cap4": {
+      "mean_miss_rate": 1.0,
+      "p90_missing_experts": 2.0,
+      "mean_latency_ms": 1000.0,
+      "resident_experts": 46,
+      "resident_mb": 441.6
+    },
+    "oracle/cap6": {
+      "mean_miss_rate": 0.0,
+      "p90_missing_experts": 0.0,
+      "mean_latency_ms": 0.0,
+      "resident_experts": 63,
+      "resident_mb": 604.8
+    },
+    "oracle/cap8": {
+      "mean_miss_rate": 0.0,
+      "p90_missing_experts": 0.0,
+      "mean_latency_ms": 0.0,
+      "resident_experts": 63,
+      "resident_mb": 604.8
+    },
+    "oracle/cap12": {
+      "mean_miss_rate": 0.0,
+      "p90_missing_experts": 0.0,
+      "mean_latency_ms": 0.0,
+      "resident_experts": 63,
+      "resident_mb": 604.8
+    },
+    "oracle/cap16": {
+      "mean_miss_rate": 0.0,
+      "p90_missing_experts": 0.0,
+      "mean_latency_ms": 0.0,
+      "resident_experts": 63,
+      "resident_mb": 604.8
+    },
+    "oracle/cap24": {
+      "mean_miss_rate": 0.0,
+      "p90_missing_experts": 0.0,
+      "mean_latency_ms": 0.0,
+      "resident_experts": 63,
+      "resident_mb": 604.8
+    },
+    "oracle/cap32": {
+      "mean_miss_rate": 0.0,
+      "p90_missing_experts": 0.0,
+      "mean_latency_ms": 0.0,
+      "resident_experts": 63,
+      "resident_mb": 604.8
+    },
+    "oracle/cap48": {
+      "mean_miss_rate": 0.0,
+      "p90_missing_experts": 0.0,
+      "mean_latency_ms": 0.0,
+      "resident_experts": 63,
+      "resident_mb": 604.8
+    },
+    "oracle/cap64": {
+      "mean_miss_rate": 0.0,
+      "p90_missing_experts": 0.0,
+      "mean_latency_ms": 0.0,
+      "resident_experts": 63,
+      "resident_mb": 604.8
+    },
+    "freq_lru/cap4": {
+      "mean_miss_rate": 1.0,
+      "p90_missing_experts": 5.0,
+      "mean_latency_ms": 2530.4,
+      "resident_experts": 14,
+      "resident_mb": 134.4
+    },
+    "freq_lru/cap6": {
+      "mean_miss_rate": 1.0,
+      "p90_missing_experts": 5.0,
+      "mean_latency_ms": 2367.4,
+      "resident_experts": 21,
+      "resident_mb": 201.6
+    },
+    "freq_lru/cap8": {
+      "mean_miss_rate": 1.0,
+      "p90_missing_experts": 5.0,
+      "mean_latency_ms": 2323.9,
+      "resident_experts": 28,
+      "resident_mb": 268.8
+    },
+    "freq_lru/cap12": {
+      "mean_miss_rate": 1.0,
+      "p90_missing_experts": 5.0,
+      "mean_latency_ms": 2332.6,
+      "resident_experts": 37,
+      "resident_mb": 355.2
+    },
+    "freq_lru/cap16": {
+      "mean_miss_rate": 1.0,
+      "p90_missing_experts": 5.0,
+      "mean_latency_ms": 2365.2,
+      "resident_experts": 46,
+      "resident_mb": 441.6
+    },
+    "freq_lru/cap24": {
+      "mean_miss_rate": 1.0,
+      "p90_missing_experts": 5.0,
+      "mean_latency_ms": 2621.7,
+      "resident_experts": 63,
+      "resident_mb": 604.8
+    },
+    "freq_lru/cap32": {
+      "mean_miss_rate": 1.0,
+      "p90_missing_experts": 4.0,
+      "mean_latency_ms": 2854.3,
+      "resident_experts": 74,
+      "resident_mb": 710.4
+    },
+    "freq_lru/cap48": {
+      "mean_miss_rate": 1.0,
+      "p90_missing_experts": 4.0,
+      "mean_latency_ms": 3534.8,
+      "resident_experts": 98,
+      "resident_mb": 940.8
+    },
+    "freq_lru/cap64": {
+      "mean_miss_rate": 1.0,
+      "p90_missing_experts": 4.0,
+      "mean_latency_ms": 4263.0,
+      "resident_experts": 115,
+      "resident_mb": 1104.0
+    }
+  }
+}

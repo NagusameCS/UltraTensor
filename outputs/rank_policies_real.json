@@ -1,0 +1,76 @@
+{
+  "ranks": {
+    "fixed": [
+      256,
+      256,
+      256,
+      256
+    ],
+    "frank": [
+      461,
+      461,
+      461,
+      461
+    ],
+    "mcr": [
+      194,
+      277,
+      277,
+      277
+    ],
+    "grcurv": [
+      209,
+      247,
+      314,
+      254
+    ]
+  },
+  "summary": {
+    "fixed": {
+      "gini": 0.0,
+      "min": 256,
+      "max": 256,
+      "sum": 1024
+    },
+    "frank": {
+      "gini": 0.0,
+      "min": 461,
+      "max": 461,
+      "sum": 1844
+    },
+    "mcr": {
+      "gini": 0.0607,
+      "min": 194,
+      "max": 277,
+      "sum": 1025
+    },
+    "grcurv": {
+      "gini": 0.0786,
+      "min": 209,
+      "max": 314,
+      "sum": 1024
+    },
+    "frank_dominant_mode": "context",
+    "mcr_phases_valid": true
+  },
+  "inputs": "outputs\\exp96_ffn_inputs_dense.npz",
+  "layers": [
+    "L0",
+    "L1",
+    "L2",
+    "L3"
+  ],
+  "act_variance": [
+    0.010872,
+    0.015313,
+    0.022969,
+    0.016041
+  ],
+  "hidden_norm": [
+    10.19,
+    11.21,
+    15.37,
+    12.98
+  ],
+  "note": "real exp96 per-layer activation variance; frob_err flat 0.1 (G4: weight spectra flat); sectional from normalized variance"
+}

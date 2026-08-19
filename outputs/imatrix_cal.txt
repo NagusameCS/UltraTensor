@@ -1,0 +1,240 @@
+Implement a binary search over a sorted array returning the index or -1.
+Write a function that reverses a linked list in place.
+Implement Dijkstra's shortest path with a priority queue.
+Write a LRU cache class with get and put in O(1).
+Implement quicksort with in-place partitioning.
+Write a function to merge k sorted lists efficiently.
+Implement a trie with insert, search, and startsWith.
+Find the longest common subsequence of two strings using dynamic programming.
+Implement a thread-safe ring buffer.
+Write a Bloom filter with configurable size and hash count.
+Write a Python decorator that caches function results with functools.lru_cache.
+Use asyncio to fetch 10 URLs concurrently and collect the results.
+Write a context manager that times a block of code.
+Implement a dataclass with a custom __post_init__ validation.
+Write a generator that yields the first n Fibonacci numbers.
+Use itertools.groupby to group a list of dicts by a key.
+Write a producer-consumer queue in C with pthreads and a mutex.
+Implement a simple HTTP server in Go with graceful shutdown.
+Write a memory allocator with malloc/free using a free list.
+Implement a copy-on-write fork in a toy operating system.
+Write a lock-free stack using compare-and-swap.
+Write a Rust function that parses an integer from a string with error handling.
+Implement a smart pointer with reference counting in C++.
+Write a JavaScript debounce function for a search input.
+Implement a TypeScript generic that maps over a tuple.
+Write a C++ template metaprogram to compute factorial at compile time.
+Write SQL to find duplicate rows in a users table by email.
+Implement a b-tree insertion algorithm.
+Write a query to compute a running total per day in PostgreSQL.
+Implement AES key expansion in Python.
+Write a constant-time string comparison function.
+Implement HMAC-SHA256 from primitives.
+Implement gradient descent for linear regression with numpy.
+Write a function to compute the matrix pseudoinverse via SVD.
+Implement the softmax function with numerical stability.
+Write a Kalman filter update step.
+Explain what a dangling pointer is and give an example.
+What is the difference between stack and heap allocation?
+Fix this bug: for i in range(len(items)): if items[i] == 3: items.pop(i)
+What does tail recursion mean and why do compilers optimize it?
+Implement a binary search over a sorted array returning the index or -1.
+Write a function that reverses a linked list in place.
+Implement Dijkstra's shortest path with a priority queue.
+Write a LRU cache class with get and put in O(1).
+Implement quicksort with in-place partitioning.
+Write a function to merge k sorted lists efficiently.
+Implement a trie with insert, search, and startsWith.
+Find the longest common subsequence of two strings using dynamic programming.
+Implement a thread-safe ring buffer.
+Write a Bloom filter with configurable size and hash count.
+Write a Python decorator that caches function results with functools.lru_cache.
+Use asyncio to fetch 10 URLs concurrently and collect the results.
+Write a context manager that times a block of code.
+Implement a dataclass with a custom __post_init__ validation.
+Write a generator that yields the first n Fibonacci numbers.
+Use itertools.groupby to group a list of dicts by a key.
+Write a producer-consumer queue in C with pthreads and a mutex.
+Implement a simple HTTP server in Go with graceful shutdown.
+Write a memory allocator with malloc/free using a free list.
+Implement a copy-on-write fork in a toy operating system.
+Write a lock-free stack using compare-and-swap.
+Write a Rust function that parses an integer from a string with error handling.
+Implement a smart pointer with reference counting in C++.
+Write a JavaScript debounce function for a search input.
+Implement a TypeScript generic that maps over a tuple.
+Write a C++ template metaprogram to compute factorial at compile time.
+Write SQL to find duplicate rows in a users table by email.
+Implement a b-tree insertion algorithm.
+Write a query to compute a running total per day in PostgreSQL.
+Implement AES key expansion in Python.
+Write a constant-time string comparison function.
+Implement HMAC-SHA256 from primitives.
+Implement gradient descent for linear regression with numpy.
+Write a function to compute the matrix pseudoinverse via SVD.
+Implement the softmax function with numerical stability.
+Write a Kalman filter update step.
+Explain what a dangling pointer is and give an example.
+What is the difference between stack and heap allocation?
+Fix this bug: for i in range(len(items)): if items[i] == 3: items.pop(i)
+What does tail recursion mean and why do compilers optimize it?
+Implement a binary search over a sorted array returning the index or -1.
+Write a function that reverses a linked list in place.
+Implement Dijkstra's shortest path with a priority queue.
+Write a LRU cache class with get and put in O(1).
+Implement quicksort with in-place partitioning.
+Write a function to merge k sorted lists efficiently.
+Implement a trie with insert, search, and startsWith.
+Find the longest common subsequence of two strings using dynamic programming.
+Implement a thread-safe ring buffer.
+Write a Bloom filter with configurable size and hash count.
+Write a Python decorator that caches function results with functools.lru_cache.
+Use asyncio to fetch 10 URLs concurrently and collect the results.
+Write a context manager that times a block of code.
+Implement a dataclass with a custom __post_init__ validation.
+Write a generator that yields the first n Fibonacci numbers.
+Use itertools.groupby to group a list of dicts by a key.
+Write a producer-consumer queue in C with pthreads and a mutex.
+Implement a simple HTTP server in Go with graceful shutdown.
+Write a memory allocator with malloc/free using a free list.
+Implement a copy-on-write fork in a toy operating system.
+Write a lock-free stack using compare-and-swap.
+Write a Rust function that parses an integer from a string with error handling.
+Implement a smart pointer with reference counting in C++.
+Write a JavaScript debounce function for a search input.
+Implement a TypeScript generic that maps over a tuple.
+Write a C++ template metaprogram to compute factorial at compile time.
+Write SQL to find duplicate rows in a users table by email.
+Implement a b-tree insertion algorithm.
+Write a query to compute a running total per day in PostgreSQL.
+Implement AES key expansion in Python.
+Write a constant-time string comparison function.
+Implement HMAC-SHA256 from primitives.
+Implement gradient descent for linear regression with numpy.
+Write a function to compute the matrix pseudoinverse via SVD.
+Implement the softmax function with numerical stability.
+Write a Kalman filter update step.
+Explain what a dangling pointer is and give an example.
+What is the difference between stack and heap allocation?
+Fix this bug: for i in range(len(items)): if items[i] == 3: items.pop(i)
+What does tail recursion mean and why do compilers optimize it?
+Implement a binary search over a sorted array returning the index or -1.
+Write a function that reverses a linked list in place.
+Implement Dijkstra's shortest path with a priority queue.
+Write a LRU cache class with get and put in O(1).
+Implement quicksort with in-place partitioning.
+Write a function to merge k sorted lists efficiently.
+Implement a trie with insert, search, and startsWith.
+Find the longest common subsequence of two strings using dynamic programming.
+Implement a thread-safe ring buffer.
+Write a Bloom filter with configurable size and hash count.
+Write a Python decorator that caches function results with functools.lru_cache.
+Use asyncio to fetch 10 URLs concurrently and collect the results.
+Write a context manager that times a block of code.
+Implement a dataclass with a custom __post_init__ validation.
+Write a generator that yields the first n Fibonacci numbers.
+Use itertools.groupby to group a list of dicts by a key.
+Write a producer-consumer queue in C with pthreads and a mutex.
+Implement a simple HTTP server in Go with graceful shutdown.
+Write a memory allocator with malloc/free using a free list.
+Implement a copy-on-write fork in a toy operating system.
+Write a lock-free stack using compare-and-swap.
+Write a Rust function that parses an integer from a string with error handling.
+Implement a smart pointer with reference counting in C++.
+Write a JavaScript debounce function for a search input.
+Implement a TypeScript generic that maps over a tuple.
+Write a C++ template metaprogram to compute factorial at compile time.
+Write SQL to find duplicate rows in a users table by email.
+Implement a b-tree insertion algorithm.
+Write a query to compute a running total per day in PostgreSQL.
+Implement AES key expansion in Python.
+Write a constant-time string comparison function.
+Implement HMAC-SHA256 from primitives.
+Implement gradient descent for linear regression with numpy.
+Write a function to compute the matrix pseudoinverse via SVD.
+Implement the softmax function with numerical stability.
+Write a Kalman filter update step.
+Explain what a dangling pointer is and give an example.
+What is the difference between stack and heap allocation?
+Fix this bug: for i in range(len(items)): if items[i] == 3: items.pop(i)
+What does tail recursion mean and why do compilers optimize it?
+Implement a binary search over a sorted array returning the index or -1.
+Write a function that reverses a linked list in place.
+Implement Dijkstra's shortest path with a priority queue.
+Write a LRU cache class with get and put in O(1).
+Implement quicksort with in-place partitioning.
+Write a function to merge k sorted lists efficiently.
+Implement a trie with insert, search, and startsWith.
+Find the longest common subsequence of two strings using dynamic programming.
+Implement a thread-safe ring buffer.
+Write a Bloom filter with configurable size and hash count.
+Write a Python decorator that caches function results with functools.lru_cache.
+Use asyncio to fetch 10 URLs concurrently and collect the results.
+Write a context manager that times a block of code.
+Implement a dataclass with a custom __post_init__ validation.
+Write a generator that yields the first n Fibonacci numbers.
+Use itertools.groupby to group a list of dicts by a key.
+Write a producer-consumer queue in C with pthreads and a mutex.
+Implement a simple HTTP server in Go with graceful shutdown.
+Write a memory allocator with malloc/free using a free list.
+Implement a copy-on-write fork in a toy operating system.
+Write a lock-free stack using compare-and-swap.
+Write a Rust function that parses an integer from a string with error handling.
+Implement a smart pointer with reference counting in C++.
+Write a JavaScript debounce function for a search input.
+Implement a TypeScript generic that maps over a tuple.
+Write a C++ template metaprogram to compute factorial at compile time.
+Write SQL to find duplicate rows in a users table by email.
+Implement a b-tree insertion algorithm.
+Write a query to compute a running total per day in PostgreSQL.
+Implement AES key expansion in Python.
+Write a constant-time string comparison function.
+Implement HMAC-SHA256 from primitives.
+Implement gradient descent for linear regression with numpy.
+Write a function to compute the matrix pseudoinverse via SVD.
+Implement the softmax function with numerical stability.
+Write a Kalman filter update step.
+Explain what a dangling pointer is and give an example.
+What is the difference between stack and heap allocation?
+Fix this bug: for i in range(len(items)): if items[i] == 3: items.pop(i)
+What does tail recursion mean and why do compilers optimize it?
+Implement a binary search over a sorted array returning the index or -1.
+Write a function that reverses a linked list in place.
+Implement Dijkstra's shortest path with a priority queue.
+Write a LRU cache class with get and put in O(1).
+Implement quicksort with in-place partitioning.
+Write a function to merge k sorted lists efficiently.
+Implement a trie with insert, search, and startsWith.
+Find the longest common subsequence of two strings using dynamic programming.
+Implement a thread-safe ring buffer.
+Write a Bloom filter with configurable size and hash count.
+Write a Python decorator that caches function results with functools.lru_cache.
+Use asyncio to fetch 10 URLs concurrently and collect the results.
+Write a context manager that times a block of code.
+Implement a dataclass with a custom __post_init__ validation.
+Write a generator that yields the first n Fibonacci numbers.
+Use itertools.groupby to group a list of dicts by a key.
+Write a producer-consumer queue in C with pthreads and a mutex.
+Implement a simple HTTP server in Go with graceful shutdown.
+Write a memory allocator with malloc/free using a free list.
+Implement a copy-on-write fork in a toy operating system.
+Write a lock-free stack using compare-and-swap.
+Write a Rust function that parses an integer from a string with error handling.
+Implement a smart pointer with reference counting in C++.
+Write a JavaScript debounce function for a search input.
+Implement a TypeScript generic that maps over a tuple.
+Write a C++ template metaprogram to compute factorial at compile time.
+Write SQL to find duplicate rows in a users table by email.
+Implement a b-tree insertion algorithm.
+Write a query to compute a running total per day in PostgreSQL.
+Implement AES key expansion in Python.
+Write a constant-time string comparison function.
+Implement HMAC-SHA256 from primitives.
+Implement gradient descent for linear regression with numpy.
+Write a function to compute the matrix pseudoinverse via SVD.
+Implement the softmax function with numerical stability.
+Write a Kalman filter update step.
+Explain what a dangling pointer is and give an example.
+What is the difference between stack and heap allocation?
+Fix this bug: for i in range(len(items)): if items[i] == 3: items.pop(i)
+What does tail recursion mean and why do compilers optimize it?

@@ -1,0 +1,14 @@
+{
+  "0": {
+    "mean_offdiag_act_cos": 0.038846417273761646,
+    "max_offdiag_act_cos": 0.06477712839841843,
+    "mean_offdiag_weight_corr": -2.7901837742129105e-05,
+    "max_offdiag_weight_corr": 0.0005705865122614863
+  },
+  "3": {
+    "mean_offdiag_act_cos": 0.007798592033037549,
+    "max_offdiag_act_cos": 0.04255063459277153,
+    "mean_offdiag_weight_corr": 1.1192345825856449e-05,
+    "max_offdiag_weight_corr": 0.0005333531766696431
+  }
+}

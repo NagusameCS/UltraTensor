@@ -1,0 +1,13 @@
+{
+  "layer": 3,
+  "n_samples": 24,
+  "top_k": 6,
+  "controller_params": 2752512,
+  "factored_params": 120832,
+  "router_params": 2752896,
+  "topk_agreement_insample": 1.0,
+  "factored_holdout_agreement": {
+    "fwd": 0.4375,
+    "rev": 0.125
+  }
+}

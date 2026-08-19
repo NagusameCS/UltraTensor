@@ -1,0 +1,31 @@
+{
+  "n_hash_layers": 3,
+  "layers": {
+    "L0": {
+      "shape": [
+        129280,
+        6
+      ],
+      "dtype": "int32",
+      "bytes": 3102720
+    },
+    "L1": {
+      "shape": [
+        129280,
+        6
+      ],
+      "dtype": "int32",
+      "bytes": 3102720
+    },
+    "L2": {
+      "shape": [
+        129280,
+        6
+      ],
+      "dtype": "int32",
+      "bytes": 3102720
+    }
+  },
+  "code_battery_covered_tokens": 87,
+  "code_battery_n_tokens": 87
+}

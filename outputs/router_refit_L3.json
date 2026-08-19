@@ -1,0 +1,26 @@
+{
+  "layer": 3,
+  "top_k": 6,
+  "n_code_tokens": 87,
+  "keep": {
+    "32": {
+      "n_kept": 32,
+      "mean_top6_kept_fraction": 0.8831,
+      "full_coverage_rate": 0.5057,
+      "general_full_coverage_rate": 0.0
+    },
+    "64": {
+      "n_kept": 64,
+      "mean_top6_kept_fraction": 0.9751,
+      "full_coverage_rate": 0.8851,
+      "general_full_coverage_rate": 0.0233
+    },
+    "96": {
+      "n_kept": 96,
+      "mean_top6_kept_fraction": 0.9751,
+      "full_coverage_rate": 0.8851,
+      "general_full_coverage_rate": 0.0233
+    }
+  },
+  "n_general_tokens": 86
+}

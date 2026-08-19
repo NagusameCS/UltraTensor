@@ -1,0 +1,10 @@
+{
+  "n_tokens": 12,
+  "mean_tok_s": 0.188,
+  "gpu_idle_power_W": 2.07,
+  "rank_coeff_joules_per_rank": 0.00541564,
+  "gpu_joules_per_token": 0.347,
+  "cpu_joules_per_token_est": 16.957,
+  "gpu_energy_share": 0.02,
+  "verdict": "GPU is 2.0% of decode energy on this CPU/SSD-bound path; GPU-thermal rank is the wrong knob here (it targets CUDA-bound paths)"
+}

@@ -1,0 +1,89 @@
+{
+  "n_tokens": 96,
+  "layers": {
+    "0": {
+      "n_steps": 96,
+      "distinct_experts": 249,
+      "H": {
+        "1": {
+          "oracle_union": 6.0,
+          "set_markov_hit": 0.9579,
+          "set_markov_size": 33.21
+        },
+        "4": {
+          "oracle_union": 23.221052631578946,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 249.0
+        },
+        "8": {
+          "oracle_union": 43.44210526315789,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 249.0
+        }
+      }
+    },
+    "1": {
+      "n_steps": 96,
+      "distinct_experts": 250,
+      "H": {
+        "1": {
+          "oracle_union": 6.0,
+          "set_markov_hit": 0.9632,
+          "set_markov_size": 33.12
+        },
+        "4": {
+          "oracle_union": 23.05263157894737,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 250.0
+        },
+        "8": {
+          "oracle_union": 43.14736842105263,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 250.0
+        }
+      }
+    },
+    "2": {
+      "n_steps": 96,
+      "distinct_experts": 250,
+      "H": {
+        "1": {
+          "oracle_union": 6.0,
+          "set_markov_hit": 0.9596,
+          "set_markov_size": 25.67
+        },
+        "4": {
+          "oracle_union": 23.03157894736842,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 250.0
+        },
+        "8": {
+          "oracle_union": 42.810526315789474,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 250.0
+        }
+      }
+    },
+    "3": {
+      "n_steps": 96,
+      "distinct_experts": 124,
+      "H": {
+        "1": {
+          "oracle_union": 6.0,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 30.85
+        },
+        "4": {
+          "oracle_union": 15.842105263157896,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 124.0
+        },
+        "8": {
+          "oracle_union": 25.821052631578947,
+          "set_markov_hit": 1.0,
+          "set_markov_size": 124.0
+        }
+      }
+    }
+  }
+}

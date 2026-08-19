@@ -1,0 +1,28 @@
+{
+  "layer": 0,
+  "expert": 0,
+  "kind": "ffn_down_exps",
+  "shape": [
+    7168,
+    3072
+  ],
+  "read_s": 0.7,
+  "bits4": {
+    "frob_error": 0.98484,
+    "params_M": 0.11,
+    "orig_params_M": 22.02,
+    "seconds": 18.7
+  },
+  "bits6": {
+    "frob_error": 0.97086,
+    "params_M": 0.25,
+    "orig_params_M": 22.02,
+    "seconds": 94.1
+  },
+  "bits8": {
+    "frob_error": 0.93617,
+    "params_M": 0.84,
+    "orig_params_M": 22.02,
+    "seconds": 857.3
+  }
+}

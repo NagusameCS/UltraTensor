@@ -1,0 +1,118 @@
+{
+  "layers": {
+    "0": {
+      "bigram": {
+        "cap6": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2118
+        },
+        "cap12": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2118
+        },
+        "cap18": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2118
+        },
+        "cap24": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2118
+        }
+      },
+      "oracle": {
+        "cap6": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2581
+        },
+        "cap12": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.5162
+        },
+        "cap18": {
+          "full_hit_rate": 0.0122,
+          "overlap_hit": 0.7737
+        },
+        "cap24": {
+          "full_hit_rate": 1.0,
+          "overlap_hit": 1.0
+        }
+      }
+    },
+    "1": {
+      "bigram": {
+        "cap6": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2113
+        },
+        "cap12": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2113
+        },
+        "cap18": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2113
+        },
+        "cap24": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2113
+        }
+      },
+      "oracle": {
+        "cap6": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2553
+        },
+        "cap12": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.5106
+        },
+        "cap18": {
+          "full_hit_rate": 0.0122,
+          "overlap_hit": 0.7658
+        },
+        "cap24": {
+          "full_hit_rate": 1.0,
+          "overlap_hit": 1.0
+        }
+      }
+    },
+    "2": {
+      "bigram": {
+        "cap6": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2093
+        },
+        "cap12": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2093
+        },
+        "cap18": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2093
+        },
+        "cap24": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2093
+        }
+      },
+      "oracle": {
+        "cap6": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.2552
+        },
+        "cap12": {
+          "full_hit_rate": 0.0,
+          "overlap_hit": 0.5103
+        },
+        "cap18": {
+          "full_hit_rate": 0.0122,
+          "overlap_hit": 0.7655
+        },
+        "cap24": {
+          "full_hit_rate": 1.0,
+          "overlap_hit": 1.0
+        }
+      }
+    }
+  }
+}

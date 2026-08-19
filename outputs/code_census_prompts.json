@@ -1,0 +1,156 @@
+{
+  "token_ids": [
+    115685,
+    1234,
+    24216,
+    31939,
+    295,
+    2445,
+    16,
+    36914,
+    16377,
+    27650,
+    223,
+    553,
+    4039,
+    10975,
+    80546,
+    16,
+    52,
+    583,
+    27438,
+    9132,
+    418,
+    5610,
+    17363,
+    16,
+    21916,
+    1783,
+    46588,
+    34647,
+    295,
+    6628,
+    16,
+    57266,
+    100585,
+    3077,
+    13163,
+    16,
+    37,
+    10896,
+    13697,
+    11596,
+    12131,
+    12558,
+    70735,
+    630,
+    16,
+    62116,
+    4423,
+    10781,
+    260,
+    5351,
+    4346,
+    16,
+    41,
+    53343,
+    38655,
+    362,
+    9548,
+    18103,
+    37369,
+    16,
+    57266,
+    260,
+    33393,
+    9450,
+    16,
+    92197,
+    78157,
+    3939,
+    675,
+    54934,
+    27474,
+    436,
+    16,
+    57266,
+    260,
+    291,
+    81536,
+    36897,
+    16,
+    4595,
+    15976,
+    25471,
+    17942,
+    1060,
+    260,
+    49861,
+    16
+  ],
+  "prompts": [
+    {
+      "text": "Merge two sorted arrays in place.",
+      "n": 7,
+      "start": 0
+    },
+    {
+      "text": "Python async fetch 10 urls concurrently.",
+      "n": 9,
+      "start": 7
+    },
+    {
+      "text": "Rust parse integer with error handling.",
+      "n": 8,
+      "start": 16
+    },
+    {
+      "text": "SQL find duplicate emails in users.",
+      "n": 7,
+      "start": 24
+    },
+    {
+      "text": "Implement AES key expansion.",
+      "n": 5,
+      "start": 31
+    },
+    {
+      "text": "C lock-free stack compare-and-swap.",
+      "n": 9,
+      "start": 36
+    },
+    {
+      "text": "JavaScript debounce a search input.",
+      "n": 7,
+      "start": 45
+    },
+    {
+      "text": "Gradient descent for linear regression numpy.",
+      "n": 8,
+      "start": 52
+    },
+    {
+      "text": "Implement a Bloom filter.",
+      "n": 5,
+      "start": 60
+    },
+    {
+      "text": "Tail recursion why compilers optimize it.",
+      "n": 8,
+      "start": 65
+    },
+    {
+      "text": "Implement a b-tree insertion.",
+      "n": 6,
+      "start": 73
+    },
+    {
+      "text": "TypeScript generic maps over a tuple.",
+      "n": 8,
+      "start": 79
+    }
+  ],
+  "n_prompts": 12,
+  "n_tokens": 87,
+  "domain": "code"
+}
