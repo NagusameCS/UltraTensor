@@ -3,6 +3,10 @@
 This page describes the spliced GGUFs published alongside UltraTensor, how to
 download them, and how to serve them correctly.
 
+Model hub: <https://huggingface.co/NagusameCS/ultratensor-models>
+(model card auto-synced from this page by
+`.github/workflows/hf-modelcard-sync.yml`).
+
 ## What these models are
 
 They are "keep-N" expert splices of the public BatiAI DeepSeek-V4-Pro Q3_K_M
