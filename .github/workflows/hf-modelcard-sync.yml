@@ -11,6 +11,7 @@ on:
     paths:
       - 'docs/MODELS.md'
       - 'ultratensor/model_catalog.json'
+      - '.github/workflows/hf-modelcard-sync.yml'
   workflow_dispatch:
 
 jobs:
@@ -18,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      HF_REPO: ${{ vars.HF_REPO || 'NagusameCS/ultratensor-models' }}
+      HF_REPO: NagusameCS/ultratensor-models
     steps:
       - uses: actions/checkout@v4
 
@@ -33,16 +34,24 @@ jobs:
         run: |
           python - <<'PY'
           import os
+          import sys
+          import traceback
           from huggingface_hub import HfApi
 
           repo = os.environ["HF_REPO"]
-          api = HfApi(token=os.environ["HF_TOKEN"])
-          api.create_repo(repo_id=repo, repo_type="model", exist_ok=True)
-          api.upload_file(path_or_fileobj="docs/MODELS.md",
-                          path_in_repo="README.md",
-                          repo_id=repo, repo_type="model")
-          api.upload_file(path_or_fileobj="ultratensor/model_catalog.json",
-                          path_in_repo="model_catalog.json",
-                          repo_id=repo, repo_type="model")
-          print("model card synced to", repo)
+          token = os.environ.get("HF_TOKEN", "")
+          print(f"repo: {repo}  token: {'set' if token else 'MISSING'}")
+          try:
+              api = HfApi(token=token)
+              api.create_repo(repo_id=repo, repo_type="model", exist_ok=True)
+              api.upload_file(path_or_fileobj="docs/MODELS.md",
+                              path_in_repo="README.md",
+                              repo_id=repo, repo_type="model")
+              api.upload_file(path_or_fileobj="ultratensor/model_catalog.json",
+                              path_in_repo="model_catalog.json",
+                              repo_id=repo, repo_type="model")
+              print("model card synced to", repo)
+          except Exception:
+              traceback.print_exc()
+              sys.exit(1)
           PY
