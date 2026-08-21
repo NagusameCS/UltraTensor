@@ -6,6 +6,12 @@ purpose-built slices of it — down to a 25 GB coder model that serves on a
 32 GB laptop, CPU-only. Every number below is measured on real model bytes
 and backed by a committed artifact in this repo.
 
+> **Papers.** The formal, publishable write-up is
+> [`docs/paper/ultratensor.pdf`](docs/paper/ultratensor.pdf) — a companion to the
+> [HyperTensor volume](https://github.com/NagusameCS/HyperTensor) (Papers I–XV).
+> The living, artifact-linked working draft is [`docs/PREPRINT.md`](docs/PREPRINT.md);
+> the theory roadmap is [`docs/BUILDING_ON_HYPERTENSOR.md`](docs/BUILDING_ON_HYPERTENSOR.md).
+
 ---
 
 ## Headline results (all verified, evidence in this repo)
@@ -28,10 +34,26 @@ The laptop is a 32 GB RAM / RTX 4070
 8 GB machine. **Both serving modes are now verified:** CPU-only across the
 keep-ladder (live server on `:8780`), and **GPU on the 8 GB VRAM card**
 with the IQ2_XS splice (`-ngl 12`, live server on `:8788`) at 1.5 tok/s
-generation — 15× the CPU rate. The Q3_K splices still stall on the fork's
-GPU path (under repair, tracked in `docs/ROADMAP_V4CODER.md`); the IQ2_XS
-expert quant avoids that kernel. The headline: 1.6T-parameter-class models
-spliced down to 25–156 GB, served from a laptop — CPU and GPU.
+generation — 15× the CPU rate. Q3_K now decodes on GPU too (0.07–0.15 t/s
+partial offload; the blocking defect was fixed in the fork). The headline:
+1.6T-parameter-class models spliced down to 25–156 GB, served from a
+laptop — CPU and GPU.
+
+---
+
+## Downloading the spliced models
+
+The keep-ladder GGUFs and their IQ2_XS requants are published on Hugging Face.
+See [`docs/MODELS.md`](docs/MODELS.md) for the catalog, license caveats, and
+serving flags. One command after `pip install huggingface_hub`:
+
+```powershell
+python scripts/download_models.py --dest models
+```
+
+Two serving rules that matter: `--no-op-offload` is mandatory on every Q3_K
+tier (the engine default corrupts CPU-resident Q3_K dequants), and
+long-sequence GPU decode needs the UltraTensor llama.cpp fork.
 
 ---
 
@@ -116,9 +138,9 @@ A routing + escalation layer on top of the splices (`ultratensor/hypermoe/`,
 | keep12u IQ2_XS requant | done — 20.8 GiB, 2.36 BPW |
 | keep8u/keep12u GPU serve | done — :8789 (1.2 t/s) + :8790 (0.1 t/s), registered `coder-gpu-8/12` |
 | keep64 IQ2_XS requant | blocked: one 384-expert tensor needs ~34 GB f32 scratch → "bad allocation" on 32 GB; needs chunked quant or a big-RAM host |
-| CPU serving :8780 | working |
-| CUDA offload | **working on IQ2_XS splice** — 1.5 tok/s gen on 8 GB VRAM (`:8788`); Q3_K splices hang at decode even with `-ngl 1` (upstream b10424 CUDA issue — our fork's only diffs are CPU-side; reproduced, tracked) |
-| GPU logprobs | **known crash**: `logprobs`/`top_logprobs` requests hit a CUDA illegal-memory-access in the fork's vocab top-k; plain completions are fine — PPL evals run on the CPU server |
+| CPU serving :8780 | working — requires `--no-op-offload` (llama.cpp op-offload puts a Q3_K dequant on the GPU even at `-ngl 0` and crashes at >=36 prompt tokens); PPL battery complete, mean 2.653 |
+| CUDA offload | **working on IQ2_XS splice** — 1.5 tok/s gen on 8 GB VRAM (`:8788`); long-prompt decode crash ROOT-CAUSED + FIXED in fork (`95fcdad`: repeated expert ids from fallback remap broke the cuBLAS fallback invariant) — 55-token prefill / 24-token gen / logprobs validated on rebuilt engine |
+| GPU logprobs | **working on rebuilt engine** — `n_probs`/`top_logprobs` validated on :8791 (was: CUDA illegal access in vocab top-k on old engine) |
 | node2 (32-core cluster box) | second experiment host; parallel batteries + C-kernel runs |
 
 ## Evidence index
@@ -143,9 +165,16 @@ python -m pytest tests -v
 
 ## Limitations (explicit, to avoid over-reading)
 
-- Reconstruction metrics are numerical fidelity, not task quality. No
-  perplexity/benchmark retention study on the spliced models has been run
-  yet — that is the next evaluation step.
+- Reconstruction metrics are numerical fidelity, not task quality. Task
+  retention now measured: PPL battery on CPU-served keep16u (Q3_K_M,
+  max_tokens=8) = **mean 2.653** (code 3.000, math 2.887, multilingual
+  2.629, rare 2.536, needle 2.215; `outputs/ppl_cpu16_full.json`). The
+  GPU IQ2_XS tier is a speed tier, not a quality tier: 16-token battery
+  with `--no-op-offload` measures **mean 8.540** on all five domains
+  (degenerate token loops; `outputs/ppl_gpu16_iq2xs_noopoff.json`).
+  `--no-op-offload` is mandatory on every Q3_K tier: the default
+  op-offload crashes at 36+ prompt tokens AND silently corrupts
+  short-prompt outputs.
 - Single-machine evidence (one Windows 11 laptop, CPU serving; one
   32-core Linux node for traces). No cross-hardware claims.
 - The rho predictor numbers are preliminary (192 train / 64 held-out);

@@ -186,3 +186,30 @@ CVaR tail-gate calibration set for Phase 2 extraction.
   consume the census outputs at harvest.
 - Battery retry: math prompt timed out on :8774 (retry via
   scripts/v4_eval_battery.py --only math --timeout 1800).
+
+## 2026-08-19 — GPU decode unblocked
+
+- Rebuilt the fork with CUDA 13.2 (build_cuda, BUILD_RC=0) and
+  validated on keep16u-iq2xs ngl 12 (:8791): short completions, n_probs
+  logprobs, chat logprobs all OK. Long-prompt prefill (55 tokens)
+  crashed the old engine with the cuBLAS fallback assert
+  (ggml-cuda.cu:1990, ids_to_sorted size mismatch).
+- Root cause: the splice's tid2eid remap routes dropped experts to
+  fallback expert 0 (gguf_keep.py `mp.get(v, 0)`), so token rows
+  legitimately contain repeated expert ids (dump: `[11, 0, 0, 0, 0, 0]`).
+  The fallback's matching loop `break`s after the first slot per
+  (expert, token) and under-produces rows. Fix (fork 95fcdad): drop the
+  `break` — per-slot mapping was already supported. No change for
+  unique top-6 ids (upstream never hits it).
+- Validated post-fix: 55-token prefill + 24-token decode + logprobs +
+  repeat requests, server stable. Q3_K keep16u ngl 12 now decodes with
+  AND without --no-op-offload (previously "hang at decode"; slow
+  0.07-0.15 t/s partial offload but functional). Attribution: the old
+  Q3_K hang was the cuBLAS fallback assert, not an attention-path
+  defect; the separate 36+ token op-offload Q3_K dequant crash
+  (CPU-mode) is avoided with --no-op-offload.
+- GPU PPL battery on the IQ2_XS tier (16 tokens): code 8.539, math
+  8.614 vs CPU Q3_K (8 tokens) 3.000 / 2.887 — the IQ2_XS requant
+  costs ~3x PPL on the fallback-remapped splice at temperature 0
+  (degenerate token loops). The speed tier is not the quality tier.
+- Autopilot now prefers the rebuilt engine (scripts/autopilot_gpu.ps1).

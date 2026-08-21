@@ -68,8 +68,14 @@ def extract_logprobs(resp):
 
 
 def ppl_of(entries):
-    """Perplexity from per-token logprobs (e-base)."""
-    lp = [max(e.get("logprob", 0.0), -100.0) for e in entries]
+    """Perplexity from per-token logprobs (e-base).
+
+    Skips entries whose logprob is missing (JSON null / absent) so a
+    server-side null on one token does not crash the battery; PPL is
+    computed over the tokens that carry a logprob.
+    """
+    lp = [e.get("logprob") for e in entries]
+    lp = [max(x, -100.0) for x in lp if x is not None]
     if not lp:
         return None
     import math
@@ -103,7 +109,8 @@ def main() -> int:
             entries = extract_logprobs(resp)
             entry["tokens"] = [e.get("token") for e in entries][:16]
             entry["n_tokens"] = len(entries)
-            entry["ppl"] = round(ppl_of(entries), 3) if entries else None
+            ppl = ppl_of(entries)
+            entry["ppl"] = round(ppl, 3) if ppl is not None else None
             text = resp.get("choices", [{}])[0].get("message", {}).get(
                 "content", "")
             entry["completion"] = text[:200]
@@ -117,7 +124,7 @@ def main() -> int:
                     agree / max(len(e2), 1), 4)
             entry["ok"] = True
         except (urllib.error.URLError, ValueError, KeyError,
-                TimeoutError) as exc:
+                TimeoutError, ConnectionError, OSError) as exc:
             entry["error"] = str(exc)[:120]
         report["prompts"][p["id"]] = entry
         print(f"[{p['id']}] ok={entry.get('ok')} "
@@ -127,6 +134,7 @@ def main() -> int:
     ok = [e for e in report["prompts"].values() if e.get("ok")]
     ppls = [e["ppl"] for e in ok if e.get("ppl")]
     report["mean_ppl"] = round(sum(ppls) / len(ppls), 3) if ppls else None
+    report["n_ppl"] = len(ppls)
     report["n_ok"] = len(ok)
     out = Path(a.out)
     out.write_text(json.dumps(report, indent=2), encoding="utf-8")

@@ -1,0 +1,232 @@
+% =====================================================================
+% References for "UltraTensor: Expert Splicing and Hyper-MoE Routing"
+% A companion paper to the HyperTensor volume.
+% =====================================================================
+
+% ---- The HyperTensor volume this paper builds on -------------------
+@misc{stewart2026hypertensor,
+  author       = {Stewart, William Ken Ohara},
+  title        = {{HyperTensor: The Complete Volume, Papers I through XV}},
+  year         = {2026},
+  howpublished = {NagusameCS Independent Research},
+  note         = {\url{https://github.com/NagusameCS/HyperTensor}}
+}
+
+@misc{stewart2026grc,
+  author       = {Stewart, William Ken Ohara},
+  title        = {{HyperTensor Part I: Geodesic Runtime Compression and the 106\% Baseline Anomaly}},
+  year         = {2026},
+  howpublished = {NagusameCS Independent Research},
+  note         = {\url{https://github.com/NagusameCS/HyperTensor}}
+}
+
+@misc{stewart2026ott,
+  author       = {Stewart, William Ken Ohara},
+  title        = {{HyperTensor Part IV: Organic Training Theory and Geodesic Trajectory Caching}},
+  year         = {2026},
+  howpublished = {NagusameCS Independent Research},
+  note         = {\url{https://github.com/NagusameCS/HyperTensor}}
+}
+
+@misc{stewart2026gtc,
+  author       = {Stewart, William Ken Ohara},
+  title        = {{HyperTensor Part VIII: GTC Runtime}},
+  year         = {2026},
+  howpublished = {NagusameCS Independent Research},
+  note         = {\url{https://github.com/NagusameCS/HyperTensor}}
+}
+
+@misc{stewart2026ceci,
+  author       = {Stewart, William Ken Ohara},
+  title        = {{HyperTensor Part X: CECI Component Interchange}},
+  year         = {2026},
+  howpublished = {NagusameCS Independent Research},
+  note         = {\url{https://github.com/NagusameCS/HyperTensor}}
+}
+
+@misc{stewart2026cog,
+  author       = {Stewart, William Ken Ohara},
+  title        = {{HyperTensor Part XV: COG + TEH --- The Living Model}},
+  year         = {2026},
+  howpublished = {NagusameCS Independent Research},
+  note         = {\url{https://github.com/NagusameCS/HyperTensor}}
+}
+
+% ---- Mixture-of-Experts foundations --------------------------------
+@inproceedings{shazeer2017moe,
+  author    = {Shazeer, Noam and Mirhoseini, Azalia and Maziarz, Krzysztof and
+               Davis, Andy and Le, Quoc and Hinton, Geoffrey and Dean, Jeff},
+  title     = {{Outrageously Large Neural Networks: The Sparsely-Gated
+               Mixture-of-Experts Layer}},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2017}
+}
+
+@inproceedings{lepikhin2021gshard,
+  author    = {Lepikhin, Dmitry and Lee, HyoukJoong and Xu, Yuanzhong and
+               Chen, Dehao and Firat, Orhan and Huang, Yanping and
+               Krikun, Maxim and Shazeer, Noam and Chen, Zhifeng},
+  title     = {{GShard: Scaling Giant Models with Conditional Computation and
+               Automatic Sharding}},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2021}
+}
+
+@article{fedus2022switch,
+  author  = {Fedus, William and Zoph, Barret and Shazeer, Noam},
+  title   = {{Switch Transformers: Scaling to Trillion Parameter Models with
+             Simple and Efficient Sparsity}},
+  journal = {Journal of Machine Learning Research},
+  volume  = {23},
+  number  = {120},
+  pages   = {1--39},
+  year    = {2022}
+}
+
+@article{dai2024deepseekmoe,
+  author  = {Dai, Damai and Deng, Chengqi and Zhao, Chenggang and Xu, R. X. and
+             others},
+  title   = {{DeepSeekMoE: Towards Ultimate Expert Specialization in
+             Mixture-of-Experts Language Models}},
+  journal = {arXiv preprint arXiv:2401.06066},
+  year    = {2024}
+}
+
+@article{deepseekv3,
+  author  = {{DeepSeek-AI}},
+  title   = {{DeepSeek-V3 Technical Report}},
+  journal = {arXiv preprint arXiv:2412.19437},
+  year    = {2024}
+}
+
+@article{jiang2024mixtral,
+  author  = {Jiang, Albert Q. and Sablayrolles, Alexandre and Roux, Antoine and
+             others},
+  title   = {{Mixtral of Experts}},
+  journal = {arXiv preprint arXiv:2401.04088},
+  year    = {2024}
+}
+
+% ---- MoE serving / expert offloading -------------------------------
+@article{eliseev2023offloading,
+  author  = {Eliseev, Artyom and Mazur, Denis},
+  title   = {{Fast Inference of Mixture-of-Experts Language Models with
+             Offloading}},
+  journal = {arXiv preprint arXiv:2312.17238},
+  year    = {2023}
+}
+
+@inproceedings{kong2024fiddler,
+  author    = {Kong, Rongjie and Li, Yang and Feng, Qingyuan and
+               Wang, Weijun and others},
+  title     = {{Fiddler: CPU-GPU Orchestration for Fast Inference of
+               Mixture-of-Experts Models}},
+  booktitle = {arXiv preprint arXiv:2402.07033},
+  year      = {2024}
+}
+
+% ---- Speculative decoding ------------------------------------------
+@inproceedings{leviathan2023speculative,
+  author    = {Leviathan, Yaniv and Kalman, Matan and Matias, Yossi},
+  title     = {{Fast Inference from Transformers via Speculative Decoding}},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  year      = {2023}
+}
+
+@article{chen2023accelerating,
+  author  = {Chen, Charlie and Borgeaud, Sebastian and Irving, Geoffrey and
+             Lespiau, Jean-Baptiste and Sifre, Laurent and Jumper, John},
+  title   = {{Accelerating Large Language Model Decoding with Speculative
+             Sampling}},
+  journal = {arXiv preprint arXiv:2302.01318},
+  year    = {2023}
+}
+
+% ---- Quantization --------------------------------------------------
+@inproceedings{frantar2023gptq,
+  author    = {Frantar, Elias and Ashkboos, Saleh and Hoefler, Torsten and
+               Alistarh, Dan},
+  title     = {{GPTQ: Accurate Post-Training Quantization for Generative
+               Pre-trained Transformers}},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2023}
+}
+
+@inproceedings{lin2024awq,
+  author    = {Lin, Ji and Tang, Jiaming and Tang, Haotian and Yang, Shang and
+               Dang, Xingyu and Han, Song},
+  title     = {{AWQ: Activation-aware Weight Quantization for LLM Compression
+               and Acceleration}},
+  booktitle = {Conference on Machine Learning and Systems (MLSys)},
+  year      = {2024}
+}
+
+@inproceedings{dettmers2022int8,
+  author    = {Dettmers, Tim and Lewis, Mike and Belkada, Younes and
+               Zettlemoyer, Luke},
+  title     = {{LLM.int8(): 8-bit Matrix Multiplication for Transformers at
+               Scale}},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2022}
+}
+
+% ---- Long context --------------------------------------------------
+@inproceedings{peng2024yarn,
+  author    = {Peng, Bowen and Quesnelle, Jeffrey and Fan, Honglu and
+               Shippole, Enrico},
+  title     = {{YaRN: Efficient Context Window Extension of Large Language
+               Models}},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2024}
+}
+
+% ---- Risk / statistics ---------------------------------------------
+@article{rockafellar2000cvar,
+  author  = {Rockafellar, R. Tyrrell and Uryasev, Stanislav},
+  title   = {{Optimization of Conditional Value-at-Risk}},
+  journal = {Journal of Risk},
+  volume  = {2},
+  pages   = {21--41},
+  year    = {2000}
+}
+
+@book{efron1994bootstrap,
+  author    = {Efron, Bradley and Tibshirani, Robert J.},
+  title     = {An Introduction to the Bootstrap},
+  publisher = {Chapman and Hall/CRC},
+  year      = {1994}
+}
+
+% ---- Systems / software artifacts ----------------------------------
+@misc{llamacpp,
+  author       = {Gerganov, Georgi and {llama.cpp contributors}},
+  title        = {{llama.cpp: LLM inference in C/C++}},
+  year         = {2024},
+  howpublished = {\url{https://github.com/ggml-org/llama.cpp}},
+  note         = {2023--2026; build b10424, DeepSeek4 support}
+}
+
+@misc{gguf,
+  author       = {Gerganov, Georgi and {ggml contributors}},
+  title        = {{GGUF: GGML Universal File format}},
+  year         = {2024},
+  howpublished = {\url{https://github.com/ggml-org/ggml/blob/master/docs/gguf.md}},
+  note         = {2023--2026}
+}
+
+@misc{deepseekv4pro,
+  author       = {{DeepSeek-AI}},
+  title        = {{DeepSeek-V4-Pro}},
+  year         = {2026},
+  howpublished = {Model release; GGUF distribution by BatiAI},
+  note         = {\url{https://huggingface.co/batiai/DeepSeek-V4-Pro-GGUF}}
+}
+
+@misc{ultratensor,
+  author       = {Stewart, William Ken Ohara},
+  title        = {{UltraTensor (Raphael): MoE Surgery, Expert Splicing, and
+                  Serving for DeepSeek-V4-class Models}},
+  year         = {2026},
+  howpublished = {\url{https://github.com/NagusameCS/UltraTensor}},
+  note         = {Source, artifacts, and verification suite for this paper}
+}

@@ -1,0 +1,1212 @@
+% =====================================================================
+%  UltraTensor: Expert Splicing and Hyper-Mixture-of-Experts Routing
+%  for Trillion-Parameter Models
+%
+%  A companion paper to the HyperTensor volume (Stewart 2026).
+%
+%  Build:  pdflatex ultratensor ; biber ultratensor ; pdflatex ultratensor x2
+%          (latexmk needs Perl; the manual sequence above always works.)
+%
+%  Every quantitative claim in this paper is backed by an artifact in the
+%  UltraTensor repository (outputs/, scripts/, tests/). File names are cited
+%  inline in \texttt{typewriter} font.
+% =====================================================================
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage[backend=biber,style=numeric-comp,sorting=none,giveninits=true]{biblatex}
+\addbibresource{refs.bib}
+
+\onehalfspacing
+\emergencystretch=3em  % relax lines rather than overflow on long unbreakable tokens
+
+% Let long filenames in \code{...} wrap after underscores (avoids overfull boxes
+% without hyphenat's bold-typewriter font-shape warnings).
+\AtBeginDocument{\let\underscoreorig\_ \renewcommand{\_}{\underscoreorig\allowbreak}}
+
+% ---- convenience macros --------------------------------------------
+\newcommand{\keepm}[1]{\texttt{keep#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\bpw}{\,\textsc{bpw}}
+\newcommand{\gib}{\,\textrm{GiB}}
+\newcommand{\gb}{\,\textrm{GB}}
+\newcommand{\tps}{\,\textrm{tok/s}}
+\DeclareMathOperator{\KL}{KL}
+\DeclareMathOperator*{\Ex}{\mathbb{E}}
+
+\title{UltraTensor: Expert Splicing and Hyper-Mixture-of-Experts
+Routing for Trillion-Parameter Models\\[4pt]
+\large Serving DeepSeek-V4-Pro from 697\,GB to a 16\,GB Laptop GPU\\
+\normalsize A Companion Paper to the HyperTensor Volume}
+
+\author{William Ken Ohara Stewart\\
+\small NagusameCS Independent Research\\
+\small \texttt{nagusamecs@gmail.com}\quad\url{https://github.com/NagusameCS/UltraTensor}}
+
+\date{Draft, 20 August 2026 (v0.3)}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+The HyperTensor volume~\cite{stewart2026hypertensor} showed that a dense
+transformer can be compressed and recombined using nothing but the geometry
+of its own weights. This paper carries that program to a much harder target:
+a trillion-parameter Mixture-of-Experts (MoE) model whose smallest public
+distribution does not fit on the hardware it must run on. \emph{DeepSeek-V4-Pro}
+is a 1.6-trillion-parameter MoE (49\,B active per token) whose smallest public
+GGUF is 697.3\gb{} across seventeen shards, with vendor guidance targeting
+multi-GPU servers. We show that the model's \emph{routing} structure is highly
+compressible even though its \emph{weight} structure is not: on real code
+traffic, $97.66\%$ of expert routing mass on the first dense layer concentrates
+in $64$ of $384$ experts, and only $77$ experts ever fire. We use this to build
+``keep-$N$'' expert splices --- a $156.1\gb{}$ 64-expert model and a uniform
+$16/12/8$-expert ladder --- re-quantize the ladder to IQ2\_XS
+($2.36$--$2.38\bpw$, $16.3$--$24.7\gib{}$), and serve them on a $32\gb{}$ laptop
+with an $8\gb{}$ GPU at $1.2$--$1.5\tps{}$ generation. Along the way we discover
+and fix a metadata defect in the published GGUFs that hangs
+multi-token-prediction (MTP)-enabled inference engines forever, and we localise
+and fix the two stacked CUDA decode defects that blocked long-sequence GPU
+serving: an MMQ scatter-quantise out-of-bounds write (bypassed), and a cuBLAS
+fallback invariant broken by repeated expert ids produced by our own
+fallback remap (a one-line fix that leaves upstream models untouched). We
+also document a third engine defect, \emph{op-offload}, that silently corrupts
+CPU-resident quantised tensors on short prompts as well as crashing at
+$36{+}$ tokens, and show that \code{--no-op-offload} restores correct
+log-probabilities on every domain we test. We
+complement the
+surgery with \emph{HyperMoE}: a purpose-first domain router, a measured
+reconstruction-risk predictor $\rho(h)$ (held-out Spearman $0.98$, tier
+agreement $1.0$), and hash-layer prefetch tables, which compose into an
+escalation-gated serving dispatcher. Every stage is validated against bit-level
+numpy oracles of the full architecture (block forward max relative error
+$3.4\times10^{-7}$; full $61$-layer end-to-end serve $5.2\times10^{-6}$). A
+task-retention battery measures mean perplexity $2.653$ on the CPU-served
+16-expert splice (code $3.000$), and shows the IQ2\_XS GPU tier to be a speed
+tier, not a quality tier (mean perplexity $8.540$, degenerate token loops on
+all five domains, against $2.653$ at Q3\_K). We
+report the negative results as carefully as the positive ones: per-expert
+low-rank factorisation, product quantisation, shared-basis factorisation, and
+linear router refitting all \emph{lose} on this model, and we explain why. The
+thesis is that a trillion-parameter MoE is best treated not as one compression
+target but as a \emph{conditional} system --- conditional residency, precision,
+and escalation --- with the contract ``compression failure $\Rightarrow$
+progressive recovery,'' never silent wrong output.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+% =====================================================================
+\section{Introduction}
+\label{sec:intro}
+% =====================================================================
+
+\subsection{From dense geometry to sparse routing}
+
+The HyperTensor volume~\cite{stewart2026hypertensor} answered one question in
+fifteen papers: can you compress and recombine a \emph{dense} transformer using
+only the geometry of its own weights, with no training data and no calibration?
+Part~I~\cite{stewart2026grc} compressed attention onto the leading eigenspace of
+a joint Gram matrix (GRC); Part~X~\cite{stewart2026ceci} spliced a feed-forward
+block from one model into another through a shared basis (CECI); Parts~IV and
+VIII~\cite{stewart2026ott,stewart2026gtc} cached trajectories on the latent
+manifold (GTC); and Part~XV~\cite{stewart2026cog} added a geometric confidence
+jury. Those papers worked at the $135\,\textrm{M}$--$7\,\textrm{B}$ scale on
+\emph{dense} models.
+
+This paper asks the same question of a fundamentally different object: a
+\emph{sparse} Mixture-of-Experts model three orders of magnitude larger, where
+the interesting structure is not in any single weight matrix but in \emph{which
+experts fire for which inputs}. A dense model reads all of its weights for every
+token; a top-$k$ MoE reads a small, input-dependent subset. The compression
+question therefore changes shape. It is no longer ``what is the rank of this
+matrix?'' but ``what fraction of the expert space does a given kind of traffic
+actually touch, and can the untouched remainder be removed, streamed, or
+recovered on demand without ever emitting a silently wrong token?''
+
+\subsection{The target and the hardware}
+
+\emph{DeepSeek-V4-Pro}~\cite{deepseekv4pro} is a $1.6\,\textrm{T}$-parameter /
+$49\,\textrm{B}$-active MoE in the DeepSeek-V3
+lineage~\cite{deepseekv3,dai2024deepseekmoe}: $61$ layers, hidden size $7168$,
+$384$ routed experts with top-$6$ selection plus one shared expert, and
+$\code{moe\_intermediate\_size}=3072$. Its smallest public GGUF distribution
+(BatiAI, Q3\_K\_M) is $697.3\gb{}$ across seventeen shards, measured on disk.
+The target machine is a single laptop: $32\gb{}$ of RAM and an RTX~4070 Laptop
+GPU with $8\gb{}$ of VRAM --- a configuration the vendor classifies as far below
+minimum. The gap between $697\gb{}$ of model and $32\gb{}$ of RAM cannot be
+closed by quantisation alone (Section~\ref{sec:negatives}); it is closed by
+\emph{surgery plus conditioning}.
+
+\subsection{Research questions}
+
+\begin{enumerate}[label=\textbf{RQ\arabic*.},leftmargin=3.2em]
+  \item How much of the $384$-expert space does a given domain actually use,
+        per layer, on real traffic?
+  \item Can the model be spliced to the used subset without corrupting its
+        router, and re-quantised to fit an $8\gb{}$ GPU?
+  \item Which classical compression levers (low rank, product quantisation,
+        shared bases, router refitting) help, and which fail --- and why?
+  \item Can a small, always-resident controller predict a request's
+        reconstruction risk well enough to gate escalation to a larger model?
+\end{enumerate}
+
+\subsection{Contributions}
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{A routing census of a trillion-parameter MoE.} On $87$ real code
+    tokens, the first dense layer concentrates $97.66\%$ of routing mass in its
+    top-$64$ experts, drawn from only $77$ distinct experts, $32$ of them never
+    in the general top-$64$ (Section~\ref{sec:census}). Hash layers, by
+    contrast, spread across $252$--$261$ experts. We give the analogous language
+    census (Section~\ref{sec:census}) and mid-layer censuses.
+  \item \textbf{Expert splicing (``Degenerate'').} A GGUF surgery tool that
+    writes keep-$N$ expert stacks --- a mixed-precision $156.1\gb{}$
+    64-expert splice and a uniform $16/12/8$-expert ladder
+    ($39.3/32.2/25.0\gib{}$) --- with router-column slicing and identifier
+    remapping (Section~\ref{sec:splice}).
+  \item \textbf{Two defects in the published artifacts, fixed.} All seventeen
+    shards declare one MTP layer but ship zero MTP tensors, hanging
+    MTP-enabled engines forever; a one-byte patch fixes it, A/B verified
+    (Section~\ref{sec:defects}). We also document a $3$-D importance-matrix
+    sizing constraint that aborts requantisation.
+  \item \textbf{A quantised, laptop-servable ladder.} IQ2\_XS requants at
+    $2.36$--$2.38\bpw$ ($16.3$--$24.7\gib{}$) that load and generate on an
+    $8\gb{}$ GPU at $1.2$--$1.5\tps{}$ (Sections~\ref{sec:quant},
+    \ref{sec:results}) --- a \emph{speed} tier whose quality we measure
+    honestly: at temperature $0$ the requant degenerates on $3$ of $5$ battery
+    domains, so it serves only behind a quality gate.
+  \item \textbf{GPU decode, unblocked.} We localise the two CUDA defects that
+    blocked long-sequence GPU serving and fix the second --- a cuBLAS fallback
+    invariant broken by the repeated expert ids our own fallback remap produces,
+    a one-line change that leaves upstream models untouched --- re-validating
+    $55$-token prefill, $24$-token decode, and log-probabilities on the rebuilt
+    fork (Section~\ref{sec:gpudefects}).
+  \item \textbf{HyperMoE: an escalation-gated serving stack.} A purpose-first
+    router, a reconstruction-risk predictor $\rho(h)$ (held-out Spearman
+    $0.98$), and prefetch tables, composed into a dispatcher with a GPU tier
+    manager (Section~\ref{sec:hypermoe}).
+  \item \textbf{Honest negatives.} Per-expert low-rank factorisation, product
+    quantisation, shared-basis factorisation, and linear router refitting all
+    lose on this model at any deployable budget; we quantify each
+    (Section~\ref{sec:negatives}) and explain the common cause: the expert
+    operators are functionally distinct and spectrally flat.
+  \item \textbf{Bit-level verification throughout.} A numpy reference of the
+    full architecture validates every pipeline stage
+    (Section~\ref{sec:oracles}): block forward $3.4\times10^{-7}$, full serve
+    $5.2\times10^{-6}$, top-$10$ logits $10/10$, tokenizer $15/15$.
+\end{enumerate}
+
+All source, artifacts, and the verification suite are in the UltraTensor
+repository~\cite{ultratensor}.
+
+% =====================================================================
+\section{Background}
+\label{sec:background}
+% =====================================================================
+
+\subsection{The DeepSeek-V4-Pro architecture}
+\label{sec:arch}
+
+We verified the following facts against the official model definition and the
+BatiAI GGUF headers; they are the ground truth for every measurement below.
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Shape.} $1.6\,\textrm{T}$ total / $49\,\textrm{B}$ active,
+    $61$ layers, hidden $7168$, $384$ routed experts, top-$6$, one shared
+    expert, $\code{moe\_intermediate\_size}=3072$.
+  \item \textbf{Two routing regimes.} Layers $0$--$2$ are \emph{hash} routed:
+    a token-indexed lookup table (\code{ffn\_gate\_tid2eid}) selects experts
+    with zero gating GEMV and zero per-token routing I/O. Layers $3$ and above
+    are \emph{dense} routed: a learned gate (\code{ffn\_gate\_inp},
+    $7168\times384$, F32) plus a bias (\code{exp\_probs\_b}), a sqrt-softplus
+    nonlinearity, a route scale of $2.5$, top-$k$ probability normalisation,
+    and weight-before-down application.
+  \item \textbf{Expert payload.} Each expert's gate/up projections are stored
+    Q3\_K ($9.46\,\textrm{MB}$/expert) and its down projection Q5\_K
+    ($15.1\,\textrm{MB}$/expert), so a full $384$-expert stack costs
+    $3.38+3.38+5.41\gib{}$ per layer. The routed-expert payload dominates the
+    model mass; attention (hybrid compressed/MLA with YaRN~\cite{peng2024yarn})
+    is comparatively small.
+\end{itemize}
+
+The design consequence is immediate and shapes the whole paper: \textbf{the
+model's capacity lives in its experts, and its per-token cost lives in which
+experts it reads}. Compression must therefore act on the expert set (which
+experts exist) and on the read path (which experts are fetched), not on the
+attention geometry that HyperTensor Part~I compressed so profitably in dense
+models.
+
+\subsection{What we inherit from HyperTensor}
+\label{sec:inherit}
+
+UltraTensor is a direct descendant of the HyperTensor framework, and four of its
+mechanisms carry over conceptually even though the object is now sparse:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Geometry-only compression (Part~I, GRC)}~\cite{stewart2026grc}.
+    GRC's discipline --- compress from the weights' own spectrum, then
+    \emph{measure} whether it helped --- is exactly the discipline we apply to
+    the expert operators. The answer here is largely negative
+    (Section~\ref{sec:negatives}), and reporting that honestly is itself a
+    HyperTensor inheritance.
+  \item \textbf{Component interchange (Part~X, CECI)}~\cite{stewart2026ceci}.
+    CECI splices an FFN between models sharing a basis. Expert splicing is the
+    intra-model analogue: we cut and re-stack experts of the same model, keeping
+    the router consistent with the surviving set.
+  \item \textbf{Trajectory caching and manifold navigation (Parts~IV,
+    VIII)}~\cite{stewart2026ott,stewart2026gtc}. The lazy, predicted-expert read
+    path is the MoE analogue of serving from a cached manifold: fetch only the
+    experts the next token needs.
+  \item \textbf{The geometric jury (Part~XV)}~\cite{stewart2026cog}. HyperTensor's
+    confidence aggregation $J(q,N)=1-\prod_i(1-c_i)$ is the template for our
+    escalation gate: a request is served locally when the controller is
+    confident and escalated when it is not.
+\end{itemize}
+
+The new ingredient, absent from the dense-model volume, is \emph{conditionality
+under a hard resource wall}. On the laptop, no static artifact both fits and
+retains full capability; the resolution is a system that spends capacity only
+when a request demands it.
+
+% =====================================================================
+\section{Ground-truth methodology}
+\label{sec:oracles}
+% =====================================================================
+
+Because every downstream claim depends on reading the real model bytes
+correctly, we first built a bit-exact reference and hold every stage to it.
+
+\paragraph{Numpy oracles of the full architecture.}
+We ported the full DeepSeek-V4-Pro forward pass to numpy --- Sinkhorn
+hyper-compressed mixing, the MLA/YaRN attention, the compressed-attention
+compressor, and the $384$-expert MoE --- and executed it on the real
+seventeen-shard GGUF (\code{scripts/v4\_ref\_*.py}, \code{scripts/check\_v4\_*.py}).
+Table~\ref{tab:oracles} reports the fidelity. These are not model-quality
+metrics; they certify that our readers, dequantizers, and routing logic match
+the engine to machine precision, so that a measured routing fact is a fact about
+the model and not about our code.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Stage} & \textbf{Max relative error} & \textbf{Artifact} \\
+\midrule
+Single block forward            & $3.4\times10^{-7}$ & \code{check\_v4\_block.py} \\
+Attention compressor scores     & ${\sim}6\times10^{-7}$ & \code{check\_v4\_comp.py} \\
+$130$-position cached decode     & $2.1\times10^{-6}$ & \code{check\_v4\_seq.py} \\
+Full $61$-layer end-to-end serve & $5.2\times10^{-6}$ & \code{check\_v4\_serve.py} \\
+Top-$10$ logit agreement        & $10/10$ & \code{check\_v4\_serve.py} \\
+Tokenizer battery               & $15/15$ exact & \code{check\_v4\_tok.py} \\
+\bottomrule
+\end{tabular}
+\caption{Full-architecture numpy oracles vs.\ the real model bytes. Every
+downstream measurement is validated against this reference before it is
+interpreted.}
+\label{tab:oracles}
+\end{table}
+
+\paragraph{Dequantizer and kernel verification.}
+UltraTensor decodes every llama.cpp~\cite{llamacpp} GGUF~\cite{gguf} quantisation
+format (Q8\_0, Q4\_0/1, Q5\_0/1, Q2\_K--Q6\_K, MXFP4, the full IQ family, TQ1/2,
+F16/F32/BF16), each cross-checked against \code{llama-quantize --pure} and the
+\code{gguf-py} reference decoders; MXFP4 and IQ2\_XXS reproduce real DeepSeek
+tensor blocks at exactly $0.0$ error. The C expert kernel
+(\code{ultratensor/kernels/expert\_gemv.c}), a dispatch-aware per-expert
+decode-and-GEMV path with AVX2 fused dot products, matches the numpy reference
+$9/9$ on real shard experts (\code{tests/test\_expert\_store.py}).
+
+\paragraph{Held-out discipline.}
+Every predictor in this paper reports \emph{held-out} performance. The project
+learned this the hard way: three separate in-sample headline numbers (an
+activation rank of $8$, a controller agreement of $1.0$, a nearest-neighbour
+$\rho$) each collapsed on their held-out split at $n=24$ tokens, and only some
+recovered at $n=64$--$86$. We therefore adopt disjoint train/projection/
+evaluation splits as the standard and do not publish an in-sample number without
+its held-out counterpart.
+
+% =====================================================================
+\section{Routing science}
+\label{sec:routing}
+% =====================================================================
+
+Before any surgery we characterised the router empirically, on real prompt
+batteries traced through the real bytes. These measurements decide what surgery
+is even possible.
+
+\subsection{Routing structure}
+\label{sec:structure}
+
+On layer $3$ over $24$ real tokens (\code{scripts/v4\_route\_stability.py},
+\code{outputs/route\_stability\_L3.json}) the top-$6$ selection is almost exactly
+uniform: routing entropy is pinned at $1.786$--$1.792$ nats, mean $1.7909
+\approx \ln 6$, and the selection margin between the $6$th and $7$th expert
+scores is $1.003$ on average ($\le 1.011$ maximum). The keep boundary is, on
+essentially every token, a coin flip between nearly equal scores. This single
+fact recurs throughout the paper: it is why set-membership is the wrong objective
+for a distilled controller (Section~\ref{sec:controller}) and why boundary
+disagreements are near-free in output space.
+
+Between consecutive tokens, the \emph{hash} layers churn almost completely:
+expert-set overlap is $0.06$--$0.12$ of $6$, i.e.\ churn $0.98$--$0.99$
+(\code{scripts/v4\_churn\_analysis.py}). Every hash-routed token therefore
+streams ${\sim}200\,\textrm{MB}$ of nearly all-new experts with no page-cache
+reuse --- the mechanism behind the measured hash-vs-dense latency gap of
+Section~\ref{sec:results}. Crucially, hash routes are a deterministic function of
+the \emph{next token}, so a lookahead predictor for hash layers \emph{is} a token
+drafter: one mechanism serves both speculative decoding and expert prefetch.
+
+\subsection{Domain censuses}
+\label{sec:census}
+
+\paragraph{Code.}
+On $87$ real code tokens (\code{scripts/cluster\_code\_census.py},
+\code{outputs/code\_census.json}), the first dense layer L3 concentrates
+$\mathbf{97.66\%}$ of routing mass in its top-$64$ experts, drawn from only
+$\mathbf{77}$ distinct experts, of which $32$ never appear in the general
+top-$64$ and $29$ are shared with it. The three hash layers, by contrast, spread
+across $261/252/259$ distinct experts with top-$64$ mass shares of only
+$0.50/0.53/0.51$ (Table~\ref{tab:codecensus}). This asymmetry is the empirical
+license for the keep-$64$ splice: on code traffic, two-thirds of L3's experts
+carry essentially no mass and can be removed if the router is kept consistent.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{llrr}
+\toprule
+\textbf{Layer} & \textbf{Type} & \textbf{Distinct experts} & \textbf{Top-64 mass share} \\
+\midrule
+L0 & hash  & $261$ & $0.5038$ \\
+L1 & hash  & $252$ & $0.5307$ \\
+L2 & hash  & $259$ & $0.5096$ \\
+L3 & dense & $\mathbf{77}$ & $\mathbf{0.9766}$ \\
+\bottomrule
+\end{tabular}
+\caption{Code census over $87$ real code tokens. Dense-layer routing
+concentrates; hash-layer routing spreads. L3 top-$64$ composition:
+$32$ code-exclusive $+$ $29$ shared with the general census $+$ $3$ other.}
+\label{tab:codecensus}
+\end{table}
+
+\paragraph{Languages.}
+On $128$ tokens spanning four programming languages at layer $3$
+(\code{scripts/cluster\_pl\_census.py}, \code{outputs/pl\_census.json}), the
+top-$32$ expert sets overlap substantially but not completely
+(Table~\ref{tab:langcensus}): pairwise overlap ranges $15$--$22$ of $32$
+(python/rust $18$, rust/sql $21$, sql/js $22$; python/js $15$), and a common
+core of thirteen experts appears in all four languages. Each language keeps
+$31$--$53\%$ of its top-$32$ as language-specific. The design implication is
+that language specialists are best built as a shared base plus small
+per-language additions, not as fully separate networks.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Language} & \textbf{Tokens} & \textbf{Distinct experts} & \textbf{Top-32 mass} \\
+\midrule
+python & $35$ & $63$ & $0.860$ \\
+rust   & $33$ & $48$ & $0.925$ \\
+sql    & $33$ & $43$ & $0.946$ \\
+js     & $27$ & $42$ & $0.941$ \\
+\bottomrule
+\end{tabular}
+\caption{Language census, layer $3$, $128$ tokens. Shared core (all four):
+$\{320,307,232,228,111,12,100,177,243,257,269,377,289\}$.}
+\label{tab:langcensus}
+\end{table}
+
+\paragraph{Mid layers.}
+A held-out subspace probe over layers L3--L10 (code trace) shows the routed
+inputs occupying a growing but still large fraction of the row space: PCA
+hold-out at rank $8$ rises from $0.32$ at L3 to $0.71$--$0.74$ at L7--L9
+(Appendix~\ref{app:census}). This foreshadows the negative rank result of
+Section~\ref{sec:negatives}: there is no small subspace that captures expert
+outputs at any deployable rank.
+
+\subsection{Lookahead and speculation}
+\label{sec:spec}
+
+With a \emph{perfect} $H{=}4$ lookahead, full hash-layer prefetch coverage is
+reached at exactly the $24$-expert union (cap $6\to26\%$ overlap, cap
+$12\to52\%$, cap $18\to77\%$, cap $24\to100\%$; \code{scripts/v4\_prefetch\_eval.py}).
+A weak bigram drafter plateaus at ${\sim}21\%$ at every cap: for hash layers the
+binding constraint is \emph{drafter quality}, not residency.
+
+Speculation cannot, however, be the throughput lever. With the measured verifier
+cost $T_V=8.17\,\textrm{s/token}$ (lazy-resident $0.122\tps{}$) and drafter cost
+$T_D=1.1\,\textrm{s/token}$, the speculative ceiling with a perfect drafter
+($\gamma{=}32$) is $0.754\tps{}$ (\code{scripts/spec\_projection.py}), which
+independently matches the batch-$256$ aggregate ceiling of $0.708\tps{}$
+(Section~\ref{sec:results}). At a realistic acceptance rate $a\approx0.5$ the
+projection falls to $0.12$--$0.15\tps{}$. The verifier's disk-bound read time
+is the wall; drafting is the expert-prefetch lever, not the throughput lever.
+
+% =====================================================================
+\section{What does not work, and why}
+\label{sec:negatives}
+% =====================================================================
+
+The HyperTensor discipline is to try the geometric lever and measure honestly.
+On this MoE, most classical levers fail. We record them because each failure is
+a load-bearing constraint on the design that survives.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{6.1cm}>{\raggedright\arraybackslash}p{2.9cm}}
+\toprule
+\textbf{Lever} & \textbf{Verdict (held-out, real bytes)} & \textbf{Artifact} \\
+\midrule
+Per-expert low-rank (SVD) &
+\emph{Dead.} $95\%$ energy needs rank ${\sim}2300$--$2440$ of $3072$; spectra
+essentially flat. Activation-weighted held-out rank shows \emph{no knee} to
+$r{=}64$ (L0 keeps $38$--$49\%$, L3 $42$--$59\%$ of output energy). &
+\code{exp96\_subspace\_proj.json} \\
+\addlinespace
+Expert similarity / dedup &
+\emph{Dead.} Activation cosine off-diagonal $0.039$ (L0) / $0.008$ (L3);
+weight-space correlation ${\sim}10^{-5}$. Experts are functionally distinct. &
+\code{expert\_sim\_activation.json} \\
+\addlinespace
+Product / vector quantisation &
+\emph{Dead.} $8$-bit codebooks reconstruct only ${\sim}6\%$ of expert-matrix
+energy ($4$-bit frob error $0.985$). &
+\code{pq\_expert0\_L0.json} \\
+\addlinespace
+Shared $+$ private factorisation &
+\emph{Loses.} At an equal $41.9\,\textrm{M}$-parameter budget, shared bases give
+act error $0.498$ vs.\ $0.399$ for independent factorisation; no duplicated
+bases to share. &
+\code{shared\_factor\_L3.json} \\
+\addlinespace
+Conditional rank (mass / water-fill) &
+\emph{Weak positive, immaterial.} Mass-proportional rank beats fixed by
+$1$--$2.5\%$ relative, but absolute error stays $0.84$--$0.94$ at every budget. &
+\code{rank\_sweep\_L3.json} \\
+\addlinespace
+Linear router refit (ridge) &
+\emph{Loses to slicing.} Refit coverage $0.801$ vs.\ $0.818$ for simply slicing
+the teacher gate to the kept experts. &
+\code{v4\_gate\_refit.py} \\
+\bottomrule
+\end{tabular}
+\caption{The compression levers that fail on DeepSeek-V4-Pro experts. The common
+cause: the expert operators are functionally distinct and spectrally flat, so
+there is no shared low-dimensional structure to exploit.}
+\label{tab:negatives}
+\end{table}
+
+The unifying explanation (Table~\ref{tab:negatives}) is structural. The expert
+GEMMs have flat singular spectra and near-zero pairwise correlation in both
+weight and activation space; the routed inputs do not live in a small subspace at
+any rank a deployment could afford. Every method that assumes shared or
+low-dimensional structure --- SVD, PQ, shared bases --- therefore has nothing to
+grip. What \emph{does} work is orthogonal to all of them: remove the experts a
+domain never uses (Section~\ref{sec:splice}), quantise the survivors uniformly
+(Section~\ref{sec:quant}), and predict when to escalate
+(Section~\ref{sec:hypermoe}). Capacity (which experts exist) and the read path
+(which experts are fetched) are the levers; the internal algebra of a single
+expert is not.
+
+% =====================================================================
+\section{Expert splicing}
+\label{sec:splice}
+% =====================================================================
+
+The census gives the license; \emph{Degenerate} (\code{ultratensor/gguf\_keep.py})
+performs the surgery. It writes a new GGUF whose expert stacks contain only a
+kept subset, in two modes:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Mixed-$E$ keep-$64$}: per-layer top-$64$ experts by measured
+    routing mass, preserving the model's native per-expert precision (Q3\_K
+    gate/up, Q5\_K down). Result: $156.1\gb{}$, $4.5\times$ smaller than source.
+  \item \textbf{Uniform-$E$ ladder}: a fixed $N\in\{16,12,8\}$ experts per layer
+    across all dense layers, chosen so the engine's metadata
+    (\code{expert\_count}) is internally consistent. Results: \keepm{16u}
+    $39.3\gib{}$, \keepm{12u} $32.2\gib{}$, \keepm{8u} $25.0\gib{}$ --- the last
+    $27.9\times$ smaller than the $697.3\gb{}$ source.
+\end{itemize}
+
+The non-trivial part of the surgery is keeping the router consistent with the
+surviving experts. Degenerate slices the gate weight columns
+(\code{ffn\_gate\_inp}) to the kept set, remaps the token-to-expert lookup
+tables (\code{tid2eid}) of the hash layers, rewrites the affected KV metadata,
+and embeds a provenance manifest (\code{ultratensor.keep\_manifest}) recording
+the exact kept-expert lists so any splice is reproducible from its own header.
+Because the router's keep boundary is a coin flip (Section~\ref{sec:structure}),
+slicing the teacher gate to the kept set is not only simpler than refitting a new
+router but strictly better (Table~\ref{tab:negatives}).
+
+% =====================================================================
+\section{Defects in the published artifacts}
+\label{sec:defects}
+% =====================================================================
+
+Two defects in the public distribution blocked the pipeline; both are now fixed
+and the fixes are verified.
+
+\subsection{The MTP hang}
+\label{sec:mtp}
+
+All seventeen published Pro Q3\_K\_M shards declare
+$\code{deepseek4.nextn\_predict\_layers}=1$ --- promising one
+multi-token-prediction (MTP) layer --- yet contain \emph{zero} \code{mtp.*}
+tensors. (A positive control, the Flash IQ2\_XXS GGUF, contains $2{,}376$ such
+tensors, so our detector is sound; \code{scripts/audit\_mtp.py}.) An engine built
+with DeepSeek4 MTP decoding loads the model successfully and then hangs forever
+at generation: the MTP loop waits for a draft that can never be produced.
+
+The fix is one byte: zero the flag (\code{scripts/patch\_gguf\_kv.py}). We
+verified it A/B on the same model --- with the flag set the model hangs, with the
+flag cleared generation proceeds normally. The upstream code paths are
+llama.cpp~b10424, \code{src/models/deepseek4.cpp} lines $19$--$27$ and $1409$,
+and \code{src/llama-context.cpp} lines $3631$--$3633$. This is a defect in a
+widely used public artifact, not in the model weights, and it silently costs
+every downstream user their first generation run.
+
+\subsection{Importance-matrix sizing}
+\label{sec:imatrix}
+
+Requantising a $3$-D expert stack to an IQ format requires an importance matrix
+whose value count equals $n_{e0}\cdot n_{e2}$ (input dimension times expert
+count); a mismatch aborts in upstream \code{llama-quant.cpp} lines
+$1203$--$1211$. We observed $49{,}152$ vs.\ $1{,}179{,}648$ on
+\code{blk.0.ffn\_down\_exps.weight}. The resolution is to synthesise correctly
+shaped per-stack importance matrices (\code{scripts/synth\_imatrix.py}); the
+single-file splices also required repairing a retained $17$-shard
+\code{split.count} claim (\code{scripts/patch\_gguf\_split.py}).
+
+% =====================================================================
+\section{Quantisation}
+\label{sec:quant}
+% =====================================================================
+
+With correctly shaped importance matrices, the uniform ladder requantises to
+IQ2\_XS cleanly (Table~\ref{tab:quant}). The resulting files load natively and
+generate; the $8$-expert splice at $16.3\gib{}$ is the smallest GPU-capable
+build and fits comfortably beside an $8\gb{}$ VRAM budget with layers offloaded.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Splice} & \textbf{Q3\_K size} & \textbf{IQ2\_XS size} & \textbf{Bits/weight} \\
+\midrule
+\keepm{16u} & $39.3\gib{}$ & $24.7\gib{}$ & $2.36$ \\
+\keepm{12u} & $32.2\gib{}$ & $20.8\gib{}$ & $2.36$ \\
+\keepm{8u}  & $25.0\gib{}$ & $16.3\gib{}$ & $2.38$ \\
+\bottomrule
+\end{tabular}
+\caption{IQ2\_XS requantisation of the uniform ladder. The keep-$64$ splice is
+excluded: a single $384$-expert tensor needs ${\sim}34\gb{}$ of f32 scratch and
+overflows $32\gb{}$ of RAM, so it is queued on a $32$-core host with swap.}
+\label{tab:quant}
+\end{table}
+
+We emphasise that IQ2\_XS succeeds here precisely because it does \emph{not} rely
+on the failed levers of Section~\ref{sec:negatives}: it is a uniform,
+block-scalar code that treats every expert identically, which is the right choice
+when experts share no exploitable structure. The keep-$64$ IQ2\_XS build remains
+scratch-RAM bound and is deferred to a larger host; its dry-run projects
+$95.3\gb{}$ at $2.36\bpw{}$ (\code{scripts/imatrix\_diff.py}).
+
+% =====================================================================
+\section{HyperMoE: escalation-gated serving}
+\label{sec:hypermoe}
+% =====================================================================
+
+The splices are the components; \emph{HyperMoE} is the system that serves them.
+It is a routing and escalation layer (\code{ultratensor/hypermoe/},
+\code{scripts/hypermoe\_serve.py}) built from three measured parts.
+
+\subsection{Purpose-first domain router}
+
+A registry of eleven specialists (code, math, backend, frontend, data, devops,
+and language specialists) is addressed by a purpose-first router that classifies
+a request and dispatches it to the best specialist for which a model exists. The
+dispatcher supports three backends --- a native \code{llama-cli} path, our numpy
+reference, and an HTTP (\code{llama-server}) GPU path --- with a fallback chain
+so a request is always served by \emph{some} valid model.
+
+\subsection{The reconstruction-risk predictor \texorpdfstring{$\rho(h)$}{rho(h)}}
+\label{sec:rho}
+
+The escalation decision needs a cheap, always-resident estimate of how risky it
+is to serve a given hidden state $h$ from a compressed splice. We define the
+reconstruction risk as a divergence between the full and compressed next-token
+distributions,
+\begin{equation}
+  \rho(h) \;=\; \KL\!\big(p_{\text{full}}(\cdot\mid h)\,\|\,p_{\text{compressed}}(\cdot\mid h)\big),
+  \label{eq:rho}
+\end{equation}
+and learn a small factored ridge predictor $\hat\rho(h)$ on hidden features. To
+avoid the in-sample inflation that repeatedly fooled earlier iterations
+(Section~\ref{sec:oracles}), we use a strict three-way split: a projector-fit
+set ($128$ tokens), a predictor-fit set ($64$), and a disjoint evaluation set
+($64$), with unbiased targets (\code{scripts/v4\_rho\_predictor.py},
+\code{outputs/rho\_192.json}). The ridge predictor reaches
+\textbf{Spearman $0.9798$, mean absolute error $0.0281$, tier agreement $1.0$}
+on the held-out evaluation set; a nearest-neighbour baseline reaches
+$0.8785/0.0687/0.9062$. The predictor is rank-robust: a single calibration holds
+Spearman $0.910/0.898/0.926$ at ranks $8/16/24$
+(\code{outputs/rho\_r\{8,16,24\}.json}), so one $\rho$ serves any rank the
+escalation ladder protects.
+
+We report two honest caveats. First, all $64$ held-out tokens in this run fall
+in the ``elevated'' risk tier, so the perfect tier agreement is a low-difficulty
+result; the $256$-token calibration that would populate multiple tiers is queued.
+Second, the two-way (no projector split) variant inflates with rank ($0.85\to
+0.44$ Spearman), which is exactly why the three-way design is mandatory. With
+those caveats, $\rho(h)$ is operational: it is the gate that decides when a
+request must escalate from a splice to the keep-$64$ model or the full path.
+
+\subsection{The distilled controller}
+\label{sec:controller}
+
+A companion controller distils the dense router into a small always-resident
+predictor. The key methodological finding is that \emph{set membership is the
+wrong objective}: because the $6$th/$7$th margin is $1.003$
+(Section~\ref{sec:structure}), a controller that regresses expert \emph{scores}
+is both better-posed and smaller than one that predicts the top-$k$ set. A
+factored ridge on scores holds relative-$L_1$ error $0.086$ (forward) / $0.269$
+(reverse) at $649\,\textrm{k}$ parameters --- $4.2\times$ smaller than the router
+it replaces --- predicting $91\%/73\%$ of router score magnitude on unseen
+tokens (\code{outputs/exp96\_controller\_shrink.json}). Its residual error
+concentrates exactly in the near-tied boundaries the router itself cannot
+resolve, i.e.\ where disagreement is near-free in output space.
+
+\subsection{Prefetch tables and the GPU tier manager}
+
+For the hash layers, we export the deterministic token-to-expert map as prefetch
+tables: $129{,}280$ tokens $\times$ top-$6$ expert rows ($9.3\,\textrm{MB}$,
+\code{outputs/hash\_route\_tables.npz}), so the hot experts for a drafted token
+are resident before the forward pass. On the serving side, a GPU tier manager
+runs exactly one \code{llama-server} at a time on the $8\gb{}$ card and swaps
+models on demand; co-resident servers starve VRAM (a co-resident \keepm{12u} fell
+to $0.1\tps{}$, solo it runs $1.2\tps{}$).
+
+\subsection{The escalation cascade}
+\label{sec:escalation}
+
+The pieces compose into the cascade envisioned by the HyperTensor jury
+(Section~\ref{sec:inherit}). An edge splice (\keepm{8u}/\keepm{16u} IQ2\_XS,
+$16$--$25\gib{}$) handles the confident majority; $\rho(h)$ scores each request;
+risky requests escalate to keep-$64$ or the full path. If the edge handles a
+fraction $f$ of requests at rate $r_{\text{edge}}$ and the tail at
+$r_{\text{pro}}$, the effective rate is
+\begin{equation}
+  r_{\text{eff}} \;=\; \Big(\frac{f}{r_{\text{edge}}} + \frac{1-f}{r_{\text{pro}}}\Big)^{-1},
+  \label{eq:cascade}
+\end{equation}
+so shifting the confident majority to the fast edge is the throughput lever the
+read path denies to speculation alone (Section~\ref{sec:spec}). The contract is
+one-directional: the system may serve a token locally or escalate, but it never
+emits a token the risk gate flagged as unrecoverable.
+
+% =====================================================================
+\section{Results}
+\label{sec:results}
+% =====================================================================
+
+\subsection{Sizes and throughput}
+
+Table~\ref{tab:headline} collects the headline artifacts. The source shrinks by
+$4.5\times$ (keep-$64$) to $27.9\times$ (\keepm{8u}); the IQ2\_XS ladder serves on
+the $8\gb{}$ GPU at $1.2$--$1.5\tps{}$ generation --- roughly $15\times$ the
+CPU rate and $75$--$150\times$ the stock engine's $0.01$--$0.02\tps{}$ decode of
+the full model on the same box.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Metric} & \textbf{Value} & \textbf{Evidence} \\
+\midrule
+Source model & $697.3\gb{}$ ($17$ shards) & disk \\
+keep-$64$ splice & $156.1\gb{}$; $97.66\%$ code mass (L3) & \code{code\_census.json} \\
+Uniform ladder & $39.3/32.2/25.0\gib{}$ & disk \\
+IQ2\_XS ladder & $24.7/20.8/16.3\gib{}$ @ $2.36$--$2.38\bpw$ & quant logs \\
+GPU generation & $\mathbf{1.2}$--$\mathbf{1.5}\tps{}$ ($8\gb{}$ VRAM) & \code{cuda\_diag.log}, \code{smoke8u\_d.log} \\
+CPU generation & $0.1\tps{}$ & \code{keep16u\_gen\_test.log} \\
+Task PPL, CPU Q3\_K & $2.653$ mean ($5$ domains) & \code{ppl\_cpu16\_full.json} \\
+Task PPL, GPU IQ2\_XS & $8.58$ ($n{=}2$; degenerate) & \code{ppl\_gpu16\_iq2xs.json} \\
+$\rho$ predictor & $0.98$ / $0.028$ / $1.0$ & \code{rho\_192.json} \\
+Oracles & $3.4\times10^{-7}$ / $5.2\times10^{-6}$ & \code{check\_v4\_*.py} \\
+C expert kernel & $9/9$ vs.\ numpy & \code{test\_expert\_store.py} \\
+\bottomrule
+\end{tabular}
+\caption{Headline results, all measured on real model bytes with a cited artifact.}
+\label{tab:headline}
+\end{table}
+
+\subsection{The read path is the wall}
+
+Throughput on this hardware is bounded by bytes read per token, not by
+arithmetic. The full per-token I/O budget is $25.3\gib{}$: $13.0\gib{}$ of routed
+experts (top-$6$), $10.1\gib{}$ of dense/attention/indexer/compressor/norm
+weights, and $2.2\gib{}$ of shared expert --- giving $0.079\tps{}$ at
+$2\gb{}/\textrm{s}$. Table~\ref{tab:bandwidth} reports the measured lazy-serving
+strategies; the resident cache reaches $0.122\tps{}$, the read-only ceiling
+$0.174\tps{}$, and batch-$256$ deduplicated serving projects to $0.708\tps{}$
+aggregate. A cross-layer bootstrap ($20{,}000$ resamples,
+\code{scripts/ci\_report.py}) puts the projected single-stream rate at
+$0.1229\tps{}$ with a $95\%$ interval $[0.1210,0.1246]$, and the hash-vs-dense
+per-layer gap at $-0.0206\,\textrm{s/layer}$ with non-overlapping intervals ---
+the churn effect of Section~\ref{sec:structure} made significant.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lr}
+\toprule
+\textbf{Strategy} & \textbf{tok/s} \\
+\midrule
+Serial                              & $0.053$ \\
+Pipelined                           & $0.092$ \\
+Resident ($10.15\gib{}$ RAM cache)   & $0.122$ \\
+Resident ceiling (reads only)       & $0.174$ \\
+Batch-$256$ aggregate ceiling        & $0.708$ \\
+\midrule
+Stock engine, full model (same box) & $0.01$--$0.02$ \\
+\bottomrule
+\end{tabular}
+\caption{Measured lazy-serving throughput (\code{bench\_lazy\_full.json},
+$21.66\gib{}$/token read, $2\gb{}/\textrm{s}$ disk). The read path, not the
+drafter, is the throughput lever (Section~\ref{sec:spec}).}
+\label{tab:bandwidth}
+\end{table}
+
+\subsection{Task retention}
+
+Reconstruction fidelity is not task quality, so we ran a perplexity battery
+(code / math / multilingual / rare-domain / needle, $8$ max tokens, temperature
+$0$) against the CPU-served \keepm{16u} splice (Q3\_K\_M, $39.3\gb{}$) with the
+original engine in CPU-only mode (Table~\ref{tab:ppl},
+\code{outputs/ppl\_cpu16\_full.json}). The mean perplexity is $2.653$. These are
+first-generation numbers on a heavily spliced model, not a claim of parity with
+the full model.
+
+The same battery against the GPU tier --- the \keepm{16u} IQ2\_XS requant
+($24.7\gib{}$, $2.36\bpw$, full offload, $16$ max tokens, rebuilt fork engine,
+\code{--no-op-offload}, \code{outputs/ppl\_gpu16\_iq2xs\_noopoff.json}) ---
+measures $8.528$ (code), $8.631$ (math), $8.458$ (multilingual), $8.568$
+(rare) and $8.517$ (needle); mean $8.540$ over all five domains
+(Table~\ref{tab:pplgpu}). The completions are degenerate token loops on every
+domain, so the honest reading stands: the IQ2\_XS requant of a
+fallback-remapped splice is a \emph{speed} tier
+($0.6$--$1.5\tps$ on $8\gib{}$ VRAM) but not a \emph{quality} tier; the Q3\_K
+CPU path remains the quality baseline. With the engine's default op-offload
+instead, three of the five domains collapse into \code{<} loops with null
+log-probabilities --- op-offload places the Q3\_K dequant kernels of
+CPU-resident tensors on the GPU, and that path silently corrupts values on
+short prompts in addition to its documented $36{+}$-token crash
+(Section~\ref{sec:gpudefects}). The corrected battery reports
+\code{n\_ppl}=$5$; the earlier $2$-of-$5$ result was an engine-configuration
+artifact, not a property of the requant.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lrr}
+\toprule
+\textbf{Prompt} & \textbf{PPL} & \textbf{Latency (s)} \\
+\midrule
+code         & $3.000$ & $170$ \\
+math         & $2.887$ & $224$ \\
+multilingual & $2.629$ & $222$ \\
+rare         & $2.536$ & $224$ \\
+needle       & $2.215$ & $224$ \\
+\midrule
+\textbf{mean} & $\mathbf{2.653}$ & --- \\
+\bottomrule
+\end{tabular}
+\caption{Perplexity battery on the CPU-served \keepm{16u} splice. Serving on CPU
+required \code{--no-op-offload}: the engine's op-offload path places a Q3\_K
+dequant kernel on the GPU even at \code{-ngl 0} and crashes at $\ge36$ prompt
+tokens (Section~\ref{sec:gpudefects}).}
+\label{tab:ppl}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Prompt} & \textbf{PPL} & \textbf{Latency (s)} & \textbf{Completion} \\
+\midrule
+code         & $8.528$ & $29.5$ & repeated-token loop \\
+math         & $8.631$ & $36.4$ & repeated-token loop \\
+multilingual & $8.458$ & $38.8$ & repeated-token loop \\
+rare         & $8.568$ & $57.6$ & repeated-token loop \\
+needle       & $8.517$ & $60.5$ & repeated-token loop \\
+\midrule
+\textbf{mean} ($n{=}5$) & $\mathbf{8.540}$ & --- & --- \\
+\bottomrule
+\end{tabular}
+\caption{The same battery on the GPU IQ2\_XS tier (\keepm{16u}, $24.7\gib{}$,
+$2.36\bpw{}$, full offload, $16$ max tokens, rebuilt fork,
+\code{--no-op-offload}; \code{outputs/ppl\_gpu16\_iq2xs\_noopoff.json}). With
+the default op-offload, $3$ of $5$ domains return null log-probabilities and
+\code{<} loops (Section~\ref{sec:gpudefects}); with \code{--no-op-offload} all
+five measure, at ${\sim}3\times$ the CPU Q3\_K perplexity and with degenerate
+token loops on every domain. The IQ2\_XS ladder is a \emph{speed} tier, not a
+\emph{quality} tier.}
+\label{tab:pplgpu}
+\end{table}
+
+% =====================================================================
+\section{The GPU decode path: two defects fixed, one workaround mandated}
+\label{sec:gpudefects}
+% =====================================================================
+
+GPU serving originally worked only for short prompts ($1.2$--$1.5\tps{}$);
+sequences of ${\sim}45{+}$ tokens failed on the Q3\_K path and long prefills
+crashed the IQ2\_XS path. We localised the failures to two stacked defects in
+the underlying CUDA engine (llama.cpp~b10424), fixed the second, and
+re-validated long-sequence serving on the rebuilt fork. The splice routing
+tables are verified valid (indices in $[0,15]$), so the model data was never at
+fault.
+
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{MMQ scatter-quantise out-of-bounds write.} On a locally rebuilt
+    engine, \code{compute-sanitizer} identifies
+    \code{quantize\_mmq\_q8\_1<D4, scatter=true>} --- the MoE broadcast
+    quantisation path ($n_{\text{experts}}>1$, $n_{11}=1$) on sm\_89 --- writing
+    ${\sim}144\gb{}$ past a $2\,\textrm{MB}$ allocation ($8.8\gb{}$ before it) at
+    ${\sim}45$-token sequences (\code{outputs/sanitizer.log}). Our fork routes
+    the MoE broadcast matmuls away from MMQ at both \code{mul\_mat\_id} call
+    sites.
+  \item \textbf{Broken cuBLAS fallback --- root-caused and fixed
+    (20~Aug~2026).} The non-MMQ path for the same broadcast case failed its own
+    invariant ($\code{ids\_to\_sorted\_host.size()}=\code{ne\_get\_rows}$,
+    \code{ggml-cuda.cu:1990}). Instrumenting the assert and dumping the incoming
+    ids matrix showed the cause: the splice's token-to-expert remap routes
+    experts dropped from the keep-$N$ set to a single fallback expert ($0$), so
+    token rows \emph{legitimately} contain repeated expert ids (a captured row:
+    \code{[11, 0, 0, 0, 0, 0]}). The fallback's grouping loop
+    \code{break}s after the first slot matching each (expert, token) pair and
+    therefore under-produces rows. The fix drops the \code{break}: every slot is
+    scanned against every expert, and the per-slot scatter map
+    \code{ids\_from\_sorted\_host} --- already sized one entry per slot ---
+    carries repeated ids naturally. Models with unique top-$6$ ids (all upstream
+    models) are unaffected: the loop produces the identical row ordering.
+    Validated on the rebuilt fork: $55$-token prefill, $24$-token decode,
+    log-probabilities, repeated requests, server stable
+    (\code{outputs/rebuilt\_srv.err.log}).
+  \item \textbf{Attention-path crash --- demoted.} An earlier hybrid \code{-ot}
+    test (expert tensors pinned to CPU) crashed on the pre-fix engine; the
+    Q3\_K \code{-ngl 1} decode hang it was grouped with is now attributed to
+    defect~2 (Q3\_K decodes with and without \code{--no-op-offload} on the fixed
+    fork). The attention-path failure no longer reproduces and is classified as
+    ``needs reproduction'' rather than a confirmed separate defect.
+  \item \textbf{op-offload silent corruption (third engine defect,
+    20~Aug~2026).} With the engine's default op-offload, ops over CPU-resident
+    quantised tensors are scheduled on the GPU. At \code{-ngl 0} this crashes
+    with a CUDA illegal-memory-access at $\ge36$ prompt tokens (the original
+    reason the CPU battery required \code{--no-op-offload}). We now show it
+    also \emph{silently corrupts} on short prompts: at \code{-ngl 12}, three of
+    five battery domains collapse into \code{<} token loops with null
+    log-probabilities, and prompt processing slows from $0.42$ to
+    $0.15\tps{}$. With \code{--no-op-offload} all five domains return valid
+    log-probabilities on both the Q3\_K and IQ2\_XS tiers. This is upstream
+    scheduling behaviour, not a splice defect.
+\end{enumerate}
+
+A related length-dependent crash affected GPU log-probabilities on the original
+engine (a CUDA illegal-memory-access in the vocab top-$k$), which is why the
+first perplexity battery ran on CPU. Log-probabilities now work on the rebuilt
+fork (raw \code{n\_probs} and OpenAI-schema chat log-probabilities both return
+entries), which unblocked the GPU battery of Section~\ref{sec:results}; the old
+illegal access no longer reproduces, and its exact attribution (MMQ fallout
+vs.\ top-$k$) is reported as under test rather than claimed. The net status:
+long-sequence GPU decode is verified on IQ2\_XS ($0.6$--$1.5\tps{}$); Q3\_K
+decodes on GPU too ($0.07$--$0.15\tps{}$ partial offload); CPU-only serving
+remains the stable quality mode, and \code{--no-op-offload} is mandatory on
+every Q3\_K tier (CPU or GPU) until the upstream op-offload path is repaired.
+
+% =====================================================================
+\section{Discussion}
+\label{sec:discussion}
+% =====================================================================
+
+\subsection{A trillion-parameter MoE is a conditional system}
+
+The organising lesson is that a V4-class MoE is not one compression target but
+two, coupled by a router. Its \emph{active-path cost} (${\sim}25\gib{}$ read per
+token) and its \emph{stored capacity} ($619\gb{}$ of expert payload) respond to
+different levers. Quantisation and residency cut the active path; splicing and
+tiering cut the stored capacity; and neither alone fits the model on the laptop.
+What fits is a \emph{conditional} system: keep the hot experts resident, splice
+away the experts a domain never touches, quantise the survivors uniformly, and
+gate escalation on a measured risk predictor, under the contract that a
+compression failure triggers progressive recovery rather than a silent error.
+This is the MoE-scale realisation of the HyperTensor thesis that geometry plus
+honest measurement, not a single clever transform, is what buys deployability.
+
+\subsection{Why the negatives matter}
+
+The failures of Section~\ref{sec:negatives} are not incidental; they are the
+reason the surviving design is shaped as it is. Because experts are functionally
+distinct and spectrally flat, there is no shared subspace to factor, no codebook
+to share, and no low rank to truncate --- so the only free capacity is the
+experts a domain does not use, and the only free speed is the requests an edge
+model can safely answer. A reader who took only the positive headline would
+mis-generalise the method to models where the negatives do not hold; we therefore
+give both.
+
+\subsection{The ceiling, stated honestly}
+
+A $1.6\,\textrm{T}$ MoE will not become an always-on few-gigabyte model by
+quantisation alone. The asymmetric upside is narrower and real: \emph{fit the
+function this token needs into tiny VRAM} --- streamed predicted experts, uniform
+low-bit survivors, risk-gated escalation, and a recoverable cold path for rare
+capability. The laptop does not run the full model; it runs a system that behaves
+like the full model on the traffic it was built for and escalates elsewhere.
+The cost surface is now measured rather than assumed: the IQ2\_XS requant of the
+naive 16-expert splice sits at mean perplexity $8.540$ against $2.653$ at Q3\_K
+and produces degenerate token loops on every battery domain
+(Section~\ref{sec:results}), so the speed tier earns its place only behind a
+quality gate --- which is precisely the escalation cascade of
+Section~\ref{sec:escalation}.
+
+% =====================================================================
+\section{Limitations}
+\label{sec:limitations}
+% =====================================================================
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Fidelity vs.\ task quality.} Oracle errors (Table~\ref{tab:oracles})
+    certify byte-correct reads, not task performance. Task retention is measured
+    only by the two perplexity batteries of Section~\ref{sec:results} (CPU Q3\_K
+    and GPU IQ2\_XS, short completions); broader task benchmarks are future work.
+  \item \textbf{$\rho$ calibration scale.} The $\rho(h)$ numbers rest on $64$
+    held-out tokens that all fall in one risk tier; the $256$-token calibration
+    that would populate multiple tiers is queued.
+  \item \textbf{Census breadth.} Censuses are measured on tens to low hundreds of
+    real tokens per domain; wider traffic may reveal weak clusters the current
+    negatives (expert similarity, shared bases) do not see.
+  \item \textbf{keep-$64$ IQ2\_XS.} Blocked on RAM scratch (${\sim}34\gb{}$ for a
+    single $384$-expert tensor) on the $32\gb{}$ box; queued on a larger host.
+  \item \textbf{GPU serving.} Long-sequence decode is verified on the IQ2\_XS
+    tier of the rebuilt fork ($55$-token prefill, $24$-token decode,
+    log-probabilities); Q3\_K GPU decode works but is slow at partial offload
+    ($0.07$--$0.15\tps$). All Q3\_K tiers require \code{--no-op-offload}: the
+    default op-offload silently corrupts short-prompt outputs and crashes at
+    $36{+}$ tokens. The MMQ scatter kernel itself remains unfixed upstream
+    (bypassed in the fork), and the old attention-path report is demoted to
+    \emph{needs reproduction} (Section~\ref{sec:gpudefects}).
+  \item \textbf{Single hardware target.} All serving numbers are from one laptop
+    GPU; cross-GPU transfer (in the spirit of HyperTensor Part~IX) is future work.
+\end{itemize}
+
+% =====================================================================
+\section{Reproducibility}
+\label{sec:repro}
+% =====================================================================
+
+Every number in this paper is backed by a committed artifact in the UltraTensor
+repository~\cite{ultratensor}: the census pipeline (traces $\to$ censuses $\to$
+rankings), the splicing tool, the quantisation and serving scripts, the overnight
+watchdog, and the GPU autopilot are all in \code{scripts/}; result artifacts are
+in \code{outputs/}; the verification suite is in \code{tests/}. The package
+installs and tests with
+\begin{quote}\ttfamily
+pip install -e .\\
+python -m pytest tests -v
+\end{quote}
+The C expert kernel builds to \code{.dll} (MSVC) and \code{.so} (gcc). The
+provenance manifest embedded in each splice (\code{ultratensor.keep\_manifest})
+records the exact kept-expert lists, so any splice regenerates from its own
+header.
+
+% =====================================================================
+\section{Related work}
+\label{sec:related}
+% =====================================================================
+
+\paragraph{Mixture-of-Experts.} Sparsely-gated MoE~\cite{shazeer2017moe},
+GShard~\cite{lepikhin2021gshard}, and Switch
+Transformers~\cite{fedus2022switch} established conditional computation at scale;
+DeepSeekMoE~\cite{dai2024deepseekmoe} and DeepSeek-V3~\cite{deepseekv3} are the
+lineage of our target, and Mixtral~\cite{jiang2024mixtral} popularised open MoE
+serving. We contribute a routing \emph{census} of a trillion-parameter member of
+this family on real traffic, and expert \emph{splicing} as a domain-conditioned
+capacity cut.
+
+\paragraph{Expert offloading and MoE serving.} Offloading-based
+serving~\cite{eliseev2023offloading} and CPU--GPU
+orchestration~\cite{kong2024fiddler} stream experts on demand; our lazy C-kernel
+read path (Table~\ref{tab:bandwidth}) is a measured instance, and our prefetch
+tables quantify the drafter-as-prefetcher design (Section~\ref{sec:spec}) that
+such systems assume but rarely measure.
+
+\paragraph{Quantisation.} GPTQ~\cite{frantar2023gptq}, AWQ~\cite{lin2024awq}, and
+int8 serving~\cite{dettmers2022int8} compress dense weights with calibration; we
+find (Section~\ref{sec:negatives}) that the activation-aware low-rank and
+codebook ideas underlying these methods do \emph{not} transfer to V4-Pro's
+experts, and that a uniform IQ2\_XS code is the right survivor
+(Section~\ref{sec:quant}).
+
+\paragraph{Speculative decoding.} Speculative
+sampling~\cite{leviathan2023speculative,chen2023accelerating} accelerates dense
+decode; our projection (Section~\ref{sec:spec}) shows that on a disk-bound MoE it
+is the expert-prefetch lever, not the throughput lever.
+
+\paragraph{HyperTensor.} This paper is the MoE-scale continuation of the
+HyperTensor volume~\cite{stewart2026hypertensor}: it reuses GRC's geometry-only
+discipline~\cite{stewart2026grc}, generalises CECI splicing~\cite{stewart2026ceci}
+to intra-model expert surgery, borrows the GTC read
+model~\cite{stewart2026ott,stewart2026gtc}, and instantiates the geometric
+jury~\cite{stewart2026cog} as an escalation gate.
+
+% =====================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+% =====================================================================
+
+We took a $1.6\,\textrm{T}$-parameter MoE whose smallest public distribution is
+$697\gb{}$ and served purpose-built slices of it from a $32\gb{}$ laptop with an
+$8\gb{}$ GPU, down to a $16.3\gib{}$ coder model at $1.2$--$1.5\tps{}$. The key
+enabler is empirical: the model's routing concentrates sharply by domain
+($97.66\%$ of code mass in $64$ of $384$ experts) even though its weights resist
+every classical compression lever. We turned that asymmetry into a pipeline ---
+census, splice, quantise, route, and gate --- validated end-to-end against
+bit-level oracles, fixed a hang-inducing metadata defect in the published
+artifacts and a CUDA decode defect in the serving engine along the way,
+and reported the negative results as carefully as the positive ones. The broader
+claim, inherited from HyperTensor and sharpened at MoE scale, is that a
+trillion-parameter model is best served not as a single compressed blob but as a
+conditional system that spends capacity only when a request demands it, and never
+substitutes a silent error for an honest escalation.
+
+\printbibliography[title={References}]
+
+\appendix
+% =====================================================================
+\section{Per-layer census detail}
+\label{app:census}
+% =====================================================================
+
+Code census, $87$ real code tokens (\code{outputs/code\_census.json}). L3
+top-$64$ composition: $32$ code-exclusive, $29$ shared with the general census,
+$3$ other. Mid-layer held-out subspace probe (PCA hold-out at rank $8$, code
+trace):
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lr@{\qquad}lr}
+\toprule
+\textbf{Layer} & \textbf{Hold@8} & \textbf{Layer} & \textbf{Hold@8} \\
+\midrule
+L3 & $0.3231$ & L7  & $0.7062$ \\
+L4 & $0.5312$ & L8  & $0.7276$ \\
+L5 & $0.4024$ & L9  & $0.7428$ \\
+L6 & $0.4873$ & L10 & $0.6446$ \\
+\bottomrule
+\end{tabular}
+\caption{Mid-layer subspace hold-out. No layer admits a small rank-$8$ subspace
+capturing expert outputs, consistent with Section~\ref{sec:negatives}.}
+\end{table}
+
+% =====================================================================
+\section{Serving measurements}
+\label{app:serving}
+% =====================================================================
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccl}
+\toprule
+\textbf{Configuration} & \textbf{Gen} & \textbf{Prompt} & \textbf{Evidence} \\
+\midrule
+\keepm{16u} Q3\_K, CPU              & $0.1$   & $0.3$--$0.5$ & \code{keep16u\_gen\_test.log} \\
+\keepm{16u} IQ2\_XS, GPU ngl 12     & $1.5$   & $1.6$ & \code{cuda\_diag.log} \\
+\keepm{8u} IQ2\_XS, GPU ngl 8       & $1.2$   & $1.6$ & \code{smoke8u\_d.log} \\
+\keepm{12u} IQ2\_XS, GPU ngl 12 (solo) & $1.2$ & $1.5$ & \code{smoke12u\_solo.log} \\
+\keepm{12u} IQ2\_XS, GPU ngl 8 (co-resident) & $0.1$ & --- & autopilot log \\
+\keepm{16u} IQ2\_XS, GPU (rebuilt fork, long) & $0.6$--$1.5$ & --- & \code{rebuilt\_srv.err.log} \\
+\keepm{16u} Q3\_K, GPU (rebuilt fork, partial) & $0.07$--$0.15$ & --- & \code{rebuilt\_srv.err.log} \\
+\bottomrule
+\end{tabular}
+\caption{Serving throughput (tok/s), $8\gb{}$ VRAM. Co-resident servers starve
+VRAM; the tier manager runs one at a time (Section~\ref{sec:hypermoe}). The last
+two rows are the rebuilt fork after the defect-2 fix: long-prompt IQ2\_XS
+($55$-token prefill $+$ $24$-token decode) and Q3\_K GPU decode at partial
+offload (Section~\ref{sec:gpudefects}).}
+\end{table}
+
+% =====================================================================
+\section{Defect reports}
+\label{app:defects}
+% =====================================================================
+
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{MTP metadata inconsistency} (all $17$ shards):
+    $\code{nextn\_predict\_layers}=1$ with zero \code{mtp.*} tensors (Flash
+    control: $2{,}376$). Consequence: MTP-enabled engines load, then hang.
+    Fix: flag $\to0$, A/B verified. Tools: \code{audit\_mtp.py},
+    \code{patch\_gguf\_kv.py}.
+  \item \textbf{Importance-matrix validation} (upstream
+    \code{llama-quant.cpp:1203-1211}): $3$-D expert stacks require
+    $n_{\text{val}}=n_{e0}\cdot n_{e2}$; observed $49{,}152$ vs.\ $1{,}179{,}648$
+    on \code{blk.0.ffn\_down\_exps.weight}.
+  \item \textbf{MMQ scatter-quantise OOB write}: \code{compute-sanitizer}
+    localises \code{quantize\_mmq\_q8\_1<D4, scatter=true>} writing ${\sim}144\gb{}$
+    past a $2\,\textrm{MB}$ allocation at ${\sim}45$-token sequences; workaround
+    routes MoE broadcast matmuls to cuBLAS (\code{outputs/sanitizer.log}).
+  \item \textbf{cuBLAS fallback invariant} (\code{ggml-cuda.cu:1990}): the
+    grouping loop \code{break}s after the first slot per (expert, token) pair
+    and under-produces rows when token rows contain repeated expert ids ---
+    which the splice's fallback remap produces legitimately (captured row
+    \code{[11, 0, 0, 0, 0, 0]}). Fix (fork \code{95fcdad}): drop the
+    \code{break}; the per-slot scatter map carries repeated ids. No behaviour
+    change for unique top-$6$ ids. Validated: $55$-token prefill,
+    $24$-token decode, log-probabilities, repeated requests.
+  \item \textbf{op-offload corruption}: with the default op-offload, ops over
+    CPU-resident Q3\_K tensors run on the GPU --- crashing at $\ge36$ prompt
+    tokens at \code{-ngl 0}, and silently corrupting short-prompt outputs at
+    \code{-ngl 12} (three of five battery domains return null
+    log-probabilities and \code{<} loops). Fix: \code{--no-op-offload} on every
+    Q3\_K tier.
+\end{enumerate}
+
+% =====================================================================
+\section{Verification suite}
+\label{app:verify}
+% =====================================================================
+
+The \code{tests/} suite (23 modules) covers: dequantizers vs.\ \code{llama-quantize}
+and \code{gguf-py} references (MXFP4/IQ2\_XXS at $0.0$ error on real tensor data);
+the C expert kernel vs.\ numpy ($9/9$, \code{test\_expert\_store.py}); the GGUF
+keep-writer round-trip (\code{test\_gguf\_keep.py}); the HyperMoE router
+(\code{test\_hypermoe\_router.py}); the conditional toolkit (precision, thermal,
+basis, sinks, jury; $113$ passed, $2$ skipped across
+\code{test\_conditional*.py}); and the bootstrap-CI machinery. The full-architecture
+oracle checks (\code{check\_v4\_block.py}, \code{check\_v4\_serve.py},
+\code{check\_v4\_tok.py}) gate every measurement in the paper.
+
+\end{document}

@@ -1,0 +1,76 @@
+{
+  "note": "Catalog of UltraTensor spliced DeepSeek-V4-Coder GGUFs. Built with ultratensor/gguf_keep.py from the public BatiAI DeepSeek-V4-Pro Q3_K_M GGUF. Redistribution: verify the upstream DeepSeek model license before publishing to third parties.",
+  "serve_flags_common": "--no-op-offload is mandatory on every Q3_K tier (the engine's default op-offload corrupts CPU-resident Q3_K dequants and crashes at >=36 prompt tokens).",
+  "models": [
+    {
+      "id": "keep64",
+      "file": "DeepSeek-V4-Coder-keep64-00001-of-00001.gguf",
+      "bytes": 167629016768,
+      "quant": "Q3_K (as source)",
+      "bpw": null,
+      "desc": "64-expert dense / 384-expert hash splice. 97.66% of code routing mass on the first dense layer; 4.5x smaller than the 697.3 GB source.",
+      "serve": "CPU only on this hardware class; mmap-stream; --no-op-offload.",
+      "tiers": ["cpu"]
+    },
+    {
+      "id": "keep16u",
+      "file": "DeepSeek-V4-Coder-keep16u.gguf",
+      "bytes": 42213890400,
+      "quant": "Q3_K_M",
+      "bpw": null,
+      "desc": "Uniform 16-expert ladder splice. The quality baseline: PPL battery mean 2.653 (code 3.000, math 2.887, multilingual 2.629, rare 2.536, needle 2.215; 8 tokens, CPU).",
+      "serve": "CPU: llama-server -m <file> --host 127.0.0.1 --port 8780 -ngl 0 -c 512 --no-op-offload. GPU partial offload decodes but is slow (0.07-0.15 t/s).",
+      "tiers": ["cpu"]
+    },
+    {
+      "id": "keep12u",
+      "file": "DeepSeek-V4-Coder-keep12u.gguf",
+      "bytes": 34534261504,
+      "quant": "Q3_K_M",
+      "bpw": null,
+      "desc": "Uniform 12-expert ladder splice.",
+      "serve": "Same as keep16u.",
+      "tiers": ["cpu"]
+    },
+    {
+      "id": "keep8u",
+      "file": "DeepSeek-V4-Coder-keep8u.gguf",
+      "bytes": 26854630464,
+      "quant": "Q3_K_M",
+      "bpw": null,
+      "desc": "Uniform 8-expert ladder splice. 27.9x smaller than the source.",
+      "serve": "Same as keep16u.",
+      "tiers": ["cpu"]
+    },
+    {
+      "id": "keep16u-iq2xs",
+      "file": "DeepSeek-V4-Coder-keep16u-iq2xs.gguf",
+      "bytes": 26498674752,
+      "quant": "IQ2_XS",
+      "bpw": 2.36,
+      "desc": "IQ2_XS requant of keep16u. GPU speed tier: 1.2-1.5 t/s on 8 GB VRAM (ngl 12). Quality tier it is not: PPL battery mean 8.540 with degenerate token loops (16 tokens, GPU, --no-op-offload).",
+      "serve": "llama-server -m <file> --host 127.0.0.1 --port 8791 -ngl 12 -c 512 --no-op-offload. Long-sequence GPU decode requires the UltraTensor llama.cpp fork (cuBLAS fallback fix, commit 95fcdad); stock b10424 works for short prompts.",
+      "tiers": ["gpu"]
+    },
+    {
+      "id": "keep12u-iq2xs",
+      "file": "DeepSeek-V4-Coder-keep12u-iq2xs.gguf",
+      "bytes": 21818595808,
+      "quant": "IQ2_XS",
+      "bpw": 2.36,
+      "desc": "IQ2_XS requant of keep12u. 1.2 t/s solo on 8 GB VRAM.",
+      "serve": "Same as keep16u-iq2xs.",
+      "tiers": ["gpu"]
+    },
+    {
+      "id": "keep8u-iq2xs",
+      "file": "DeepSeek-V4-Coder-keep8u-iq2xs.gguf",
+      "bytes": 17138514720,
+      "quant": "IQ2_XS",
+      "bpw": 2.38,
+      "desc": "IQ2_XS requant of keep8u. Fastest per GiB on the ladder.",
+      "serve": "Same as keep16u-iq2xs.",
+      "tiers": ["gpu"]
+    }
+  ]
+}

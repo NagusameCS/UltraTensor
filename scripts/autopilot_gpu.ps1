@@ -8,6 +8,13 @@ $engine = "C:\Users\legom\hyperv4flash\engine"
 
 function Log($m) { "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $m" | Add-Content $log }
 
+# prefer the rebuilt fork engine (GPU decode fixes: MMQ bypass + repeated-
+# expert-id fallback fix, validated 2026-08-19) when present
+if (Test-Path "C:\Users\legom\hyperv4flash\engine_rebuilt\llama-server.exe") {
+    $engine = "C:\Users\legom\hyperv4flash\engine_rebuilt"
+    Log "using rebuilt engine (GPU decode fixes)"
+}
+
 # mutex: watchdog ticks and manual runs must not overlap
 $lock = Join-Path $root "outputs\autopilot_gpu.lock"
 if (Test-Path $lock) {
@@ -55,7 +62,7 @@ foreach ($c in $candidates) {
         Log "$k model present ($([math]::Round($sz,1)) GiB); smoke test"
         $so = Join-Path $root "outputs\smoke_$k.log"
         $se = Join-Path $root "outputs\smoke_$k.err.log"
-        $p = Start-Process -FilePath "$engine\llama-cli.exe" -ArgumentList '-m',$c.model,'-p','fibonacci','-n','2','-t','4','-ngl','8','-c','128' -WindowStyle Hidden -RedirectStandardOutput $so -RedirectStandardError $se -PassThru
+        $p = Start-Process -FilePath "$engine\llama-cli.exe" -ArgumentList '-m',$c.model,'-p','fibonacci','-n','2','-t','4','-ngl','8','-c','128','--no-op-offload' -WindowStyle Hidden -RedirectStandardOutput $so -RedirectStandardError $se -PassThru
         $p.WaitForExit(900000) | Out-Null
         if (-not $p.HasExited) { $p.Kill() }
         $txt = (Get-Content $so -Raw -ErrorAction SilentlyContinue) +
@@ -75,7 +82,7 @@ foreach ($c in $candidates) {
     if ($listening) { $st.$k.served = $true }
     if (-not $st.$k.served) {
         Log "$k starting server on port $($c.port)"
-        Start-Process -FilePath "$engine\llama-server.exe" -ArgumentList '-m',$c.model,'--host','127.0.0.1','--port',"$($c.port)",'-ngl','8','-c','512','-t','4','--parallel','1' -WindowStyle Hidden -RedirectStandardOutput (Join-Path $root "outputs\server_$k.log") -RedirectStandardError (Join-Path $root "outputs\server_$k.err.log")
+        Start-Process -FilePath "$engine\llama-server.exe" -ArgumentList '-m',$c.model,'--host','127.0.0.1','--port',"$($c.port)",'-ngl','8','-c','512','-t','4','--parallel','1','--no-op-offload' -WindowStyle Hidden -RedirectStandardOutput (Join-Path $root "outputs\server_$k.log") -RedirectStandardError (Join-Path $root "outputs\server_$k.err.log")
         Start-Sleep -Seconds 60
         if (Get-NetTCPConnection -LocalPort $c.port -State Listen -ErrorAction SilentlyContinue) {
             $st.$k.served = $true
