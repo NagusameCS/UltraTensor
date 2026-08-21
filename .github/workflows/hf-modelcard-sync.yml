@@ -1,0 +1,48 @@
+name: Sync HF model card
+
+# Keeps the Hugging Face model repo's README and catalog in sync with this
+# repository. Uses the HF_TOKEN repository secret. The model weights
+# themselves are uploaded from the local machine with
+# `python scripts/upload_models.py` (they are far too large for CI).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/MODELS.md'
+      - 'ultratensor/model_catalog.json'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_REPO: ${{ vars.HF_REPO || 'NagusameCS/ultratensor-models' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install huggingface_hub
+        run: pip install huggingface_hub
+
+      - name: Push model card + catalog to HF
+        run: |
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi
+
+          repo = os.environ["HF_REPO"]
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          api.create_repo(repo_id=repo, repo_type="model", exist_ok=True)
+          api.upload_file(path_or_fileobj="docs/MODELS.md",
+                          path_in_repo="README.md",
+                          repo_id=repo, repo_type="model")
+          api.upload_file(path_or_fileobj="ultratensor/model_catalog.json",
+                          path_in_repo="model_catalog.json",
+                          repo_id=repo, repo_type="model")
+          print("model card synced to", repo)
+          PY
